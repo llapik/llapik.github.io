@@ -3,3 +3,4 @@ User-agent: *
 Allow: /https://llapik.github.io/images/
 Disallow: /https://llapik.github.io/admin/
 Sitemap: https://llapik.github.io/sitemap.xml
+Sitemap: https://llapik.github.io/5255357_9.xml
