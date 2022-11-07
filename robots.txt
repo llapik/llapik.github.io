@@ -1,5 +1,5 @@
 User-agent: *
 
-Disallow: /https://llapik.github.io/images/
+Allow: /https://llapik.github.io/images/
 Disallow: /https://llapik.github.io/admin/
 Sitemap: https://llapik.github.io/sitemap.xml
