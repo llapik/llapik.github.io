@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portfolio of llapik (Alexandr Stix) — creative developer & designer">
+  <title>llapik — Portfolio</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loader" id="loader">
+    <span class="loader-text">llapik</span>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
+
+  <!-- Fluid Background Canvas -->
+  <canvas id="fluid-canvas"></canvas>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+      <a href="#hero" class="nav-logo">lla<span>pik</span></a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about">О себе</a></li>
+        <li><a href="#projects">Проекты</a></li>
+        <li><a href="#contact">Контакты</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <p class="hero-greeting">Привет, я</p>
+        <h1 class="hero-name">Alexandr <span class="accent">Stix</span></h1>
+        <p class="hero-tagline">Создаю цифровые продукты на стыке дизайна, кода и интерактивности</p>
+        <a href="#projects" class="hero-cta interactive">Смотреть проекты <span>&rarr;</span></a>
+      </div>
+      <div class="hero-scroll-hint">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="about" id="about">
+      <div class="about-wrapper">
+        <h2 class="section-title">О себе</h2>
+        <p class="section-subtitle">Developer & Creative Thinker</p>
+        <p class="about-text" id="about-text">
+          Я разработчик с фокусом на визуальные впечатления и интерактивные интерфейсы. Мне нравится превращать сложные идеи в элегантные цифровые решения, где каждая деталь продумана — от анимации до архитектуры кода. Работаю с современными веб-технологиями и всегда ищу способы сделать пользовательский опыт более живым и запоминающимся.
+        </p>
+        <div class="skills-grid">
+          <div class="skill-tag interactive">JavaScript</div>
+          <div class="skill-tag interactive">Three.js</div>
+          <div class="skill-tag interactive">React</div>
+          <div class="skill-tag interactive">Node.js</div>
+          <div class="skill-tag interactive">CSS / SCSS</div>
+          <div class="skill-tag interactive">Python</div>
+          <div class="skill-tag interactive">WebGL</div>
+          <div class="skill-tag interactive">UI / UX</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section class="projects" id="projects">
+      <div class="projects-wrapper">
+        <div class="projects-header">
+          <h2 class="section-title">Проекты</h2>
+          <p class="section-subtitle">Избранные работы и эксперименты</p>
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-btn active interactive" data-filter="all">Все</button>
+          </div>
+        </div>
+        <div class="projects-grid" id="projects-grid">
+          <!-- Cards rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact" id="contact">
+      <div class="contact-wrapper">
+        <h2 class="section-title" style="display:block; text-align:center;">Контакты</h2>
+        <p class="section-subtitle" style="margin:1rem auto 0; text-align:center;">Открыт для сотрудничества и новых идей</p>
+        <div class="contact-links">
+          <a href="https://github.com/llapik" target="_blank" rel="noopener" class="contact-link interactive">
+            <i class="fa-brands fa-github"></i> GitHub
+          </a>
+          <a href="https://t.me/llapik" target="_blank" rel="noopener" class="contact-link interactive">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </a>
+          <a href="mailto:hello@llapik.dev" class="contact-link interactive">
+            <i class="fa-solid fa-envelope"></i> Email
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      &copy; 2026 llapik. Все права защищены.
+    </footer>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- App -->
+  <script src="js/fluid.js"></script>
+  <script src="js/cursor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
