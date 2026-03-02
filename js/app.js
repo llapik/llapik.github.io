@@ -1,10 +1,55 @@
 /* ============================================
    Main App — Portfolio llapik
-   Scroll animations, JSON loading, filters
+   Scroll animations, JSON loading, filters,
+   section burst, theme toggle
    ============================================ */
 
 (function () {
   'use strict';
+
+  /* ---------- Theme Toggle ---------- */
+  const THEME_KEY = 'llapik-theme';
+
+  function getStoredTheme() {
+    try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+  }
+
+  function setTheme(mode) {
+    document.documentElement.setAttribute('data-theme', mode);
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) { /* ok */ }
+
+    // Update fluid shader
+    if (typeof window.setFluidLightMode === 'function') {
+      window.setFluidLightMode(mode === 'light');
+    }
+
+    // Update toggle icon
+    const icon = document.querySelector('#theme-toggle i');
+    if (icon) {
+      icon.className = mode === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+    }
+  }
+
+  function initTheme() {
+    const stored = getStoredTheme();
+    if (stored) {
+      setTheme(stored);
+    } else {
+      // Respect system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'dark'); // default dark
+    }
+  }
+
+  initTheme();
+
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
 
   /* ---------- Loader ---------- */
   window.addEventListener('load', () => {
@@ -52,21 +97,18 @@
   const navToggle = document.getElementById('nav-toggle');
   const navLinks = document.getElementById('nav-links');
 
-  // Scroll shrink
   window.addEventListener('scroll', () => {
     if (nav) {
       nav.classList.toggle('scrolled', window.scrollY > 80);
     }
   }, { passive: true });
 
-  // Mobile toggle
   if (navToggle && navLinks) {
     navToggle.addEventListener('click', () => {
       navToggle.classList.toggle('active');
       navLinks.classList.toggle('open');
     });
 
-    // Close on link click
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         navToggle.classList.remove('active');
@@ -94,6 +136,32 @@
 
   window.addEventListener('scroll', updateActiveNav, { passive: true });
 
+  /* ---------- Section Burst on Enter ---------- */
+  let lastSectionIndex = 0;
+  const sectionIds = ['hero', 'about', 'projects', 'contact'];
+  const sectionScrollPositions = { hero: 0, about: 0.15, projects: 0.45, contact: 0.75 };
+
+  const burstObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        const idx = sectionIds.indexOf(id);
+        if (idx > 0 && idx !== lastSectionIndex) {
+          lastSectionIndex = idx;
+          // Trigger color burst in the fluid shader
+          if (typeof window.triggerBurst === 'function') {
+            window.triggerBurst(sectionScrollPositions[id] || 0.5);
+          }
+        }
+      }
+    });
+  }, { root: null, threshold: 0.25 });
+
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) burstObserver.observe(el);
+  });
+
   /* ---------- About — Word Reveal ---------- */
   const aboutText = document.getElementById('about-text');
   if (aboutText) {
@@ -106,7 +174,6 @@
       span.textContent = word;
       span.style.transitionDelay = (i * 0.03) + 's';
       aboutText.appendChild(span);
-      // Add space between words
       if (i < words.length - 1) {
         aboutText.appendChild(document.createTextNode(' '));
       }
@@ -120,7 +187,6 @@
     rootMargin: '0px'
   };
 
-  // Word reveal observer
   const wordObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -135,7 +201,6 @@
     wordObserver.observe(aboutText);
   }
 
-  // Card reveal observer
   const cardObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -145,7 +210,6 @@
     });
   }, { root: null, threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-  // Section title observer
   const titleObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -202,7 +266,6 @@
       if (!response.ok) throw new Error('Failed to load projects');
       allProjects = await response.json();
 
-      // Collect all technologies for filter
       allProjects.forEach(p => {
         (p.technologies || []).forEach(t => allTechs.add(t));
       });
@@ -230,7 +293,6 @@
   }
 
   function filterProjects(tech, activeBtn) {
-    // Update active state
     filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     activeBtn.classList.add('active');
 
@@ -244,7 +306,6 @@
     }
   }
 
-  // Bind "All" button
   if (filterBar) {
     const allBtn = filterBar.querySelector('[data-filter="all"]');
     if (allBtn) {
@@ -282,8 +343,6 @@
       `;
 
       projectsGrid.appendChild(card);
-
-      // Observe for reveal animation
       cardObserver.observe(card);
     });
   }
