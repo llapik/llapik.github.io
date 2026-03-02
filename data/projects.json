@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "title": "Project Alpha",
+    "description": "A modern web application built with cutting-edge technologies. Features real-time data processing and an intuitive user interface.",
+    "technologies": ["JavaScript", "Three.js", "Node.js"],
+    "image": "",
+    "link": "https://github.com/llapik",
+    "type": "github"
+  },
+  {
+    "id": 2,
+    "title": "Project Beta",
+    "description": "Mobile-first responsive platform with advanced animation systems and seamless user experience across all devices.",
+    "technologies": ["React", "CSS3", "Firebase"],
+    "image": "",
+    "link": "https://github.com/llapik",
+    "type": "github"
+  },
+  {
+    "id": 3,
+    "title": "Project Gamma",
+    "description": "Creative design exploration combining generative art with interactive storytelling and data visualization.",
+    "technologies": ["Python", "TensorFlow", "WebGL"],
+    "image": "",
+    "link": "https://drive.google.com",
+    "type": "gdrive"
+  },
+  {
+    "id": 4,
+    "title": "Project Delta",
+    "description": "Full-stack solution for workflow automation with real-time collaboration features and cloud integration.",
+    "technologies": ["TypeScript", "Docker", "PostgreSQL"],
+    "image": "",
+    "link": "https://github.com/llapik",
+    "type": "github"
+  }
+]
