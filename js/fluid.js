@@ -1,7 +1,7 @@
 /* ============================================
-   Fluid Background — Liquid Color Mixing
-   + Color Burst on section transitions
-   + Light/Dark theme support
+   3D Particle System — Lusion-inspired
+   Flow field + 3D depth + camera tilt
+   Dissolve transitions + burst effects
    ============================================ */
 
 (function () {
@@ -11,382 +11,331 @@
   if (!canvas) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) { canvas.style.display = 'none'; return; }
+
   const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent)
                    || window.innerWidth < 768;
 
-  if (prefersReducedMotion) {
-    canvas.style.display = 'none';
-    return;
-  }
+  const COUNT = isMobile ? 900 : 3500;
+  const LINE_COUNT = isMobile ? 600 : 2500;
 
-  /* ---------- Shader Sources ---------- */
-  const vertexShader = `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `;
+  /* ---------- Three.js Setup ---------- */
+  const renderer = new THREE.WebGLRenderer({
+    canvas, alpha: true, antialias: false,
+    powerPreference: isMobile ? 'low-power' : 'high-performance'
+  });
+  const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-  const fragmentShader = `
-    precision highp float;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 4;
 
-    varying vec2 vUv;
+  const group = new THREE.Group();
+  scene.add(group);
+
+  /* ---------- Particle Shaders ---------- */
+  const particleVert = `
+    attribute float aSize;
+    attribute float aRandom;
 
     uniform float uTime;
     uniform float uScrollProgress;
     uniform vec2  uMouse;
     uniform float uMouseInfluence;
-    uniform float uRipple;
-    uniform float uRippleTime;
-    uniform vec2  uResolution;
     uniform float uBurst;
     uniform float uBurstTime;
-    uniform float uBurstScroll;
+    uniform float uPixelRatio;
     uniform float uLightMode;
 
-    // Smooth noise functions
-    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-    vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-    vec3 permute(vec3 x) { return mod289((x * 34.0 + 1.0) * x); }
+    varying vec3 vColor;
+    varying float vAlpha;
+    varying float vDist;
 
-    // Simplex 2D noise
-    float snoise(vec2 v) {
-      const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                         -0.577350269189626, 0.024390243902439);
-      vec2 i  = floor(v + dot(v, C.yy));
-      vec2 x0 = v - i + dot(i, C.xx);
-      vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-      vec4 x12 = x0.xyxy + C.xxzz;
-      x12.xy -= i1;
-      i = mod289(i);
-      vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-      vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-      m = m * m;
-      m = m * m;
-      vec3 x = 2.0 * fract(p * C.www) - 1.0;
-      vec3 h = abs(x) - 0.5;
-      vec3 ox = floor(x + 0.5);
-      vec3 a0 = x - ox;
-      m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
-      vec3 g;
-      g.x = a0.x * x0.x + h.x * x0.y;
-      g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-      return 130.0 * dot(m, g);
+    /* ---- cheap 3D gradient noise ---- */
+    vec3 hash3(vec3 p) {
+      p = vec3(dot(p, vec3(127.1, 311.7, 74.7)),
+               dot(p, vec3(269.5, 183.3, 246.1)),
+               dot(p, vec3(113.5, 271.9, 124.6)));
+      return -1.0 + 2.0 * fract(sin(p) * 43758.5453);
     }
 
-    // Fractal Brownian Motion
-    float fbm(vec2 p) {
-      float val = 0.0;
-      float amp = 0.5;
-      float freq = 1.0;
-      mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
-      for (int i = 0; i < 6; i++) {
-        val += amp * snoise(p * freq);
-        p = rot * p;
-        freq *= 2.0;
-        amp *= 0.5;
-      }
-      return val;
+    float gnoise(vec3 p) {
+      vec3 i = floor(p);
+      vec3 f = fract(p);
+      vec3 u = f * f * (3.0 - 2.0 * f);
+      return mix(
+        mix(mix(dot(hash3(i), f),
+                dot(hash3(i + vec3(1,0,0)), f - vec3(1,0,0)), u.x),
+            mix(dot(hash3(i + vec3(0,1,0)), f - vec3(0,1,0)),
+                dot(hash3(i + vec3(1,1,0)), f - vec3(1,1,0)), u.x), u.y),
+        mix(mix(dot(hash3(i + vec3(0,0,1)), f - vec3(0,0,1)),
+                dot(hash3(i + vec3(1,0,1)), f - vec3(1,0,1)), u.x),
+            mix(dot(hash3(i + vec3(0,1,1)), f - vec3(0,1,1)),
+                dot(hash3(i + vec3(1,1,1)), f - vec3(1,1,1)), u.x), u.y), u.z);
     }
 
-    // Domain warping
-    float warpedNoise(vec2 p, float t) {
-      vec2 q = vec2(
-        fbm(p + vec2(0.0, 0.0) + t * 0.15),
-        fbm(p + vec2(5.2, 1.3) + t * 0.12)
+    /* ---- flow field ---- */
+    vec3 flowField(vec3 pos, float t) {
+      return vec3(
+        gnoise(pos * 0.8 + t * 0.15),
+        gnoise(pos * 0.8 + t * 0.12 + 100.0),
+        gnoise(pos * 0.6 + t * 0.1  + 200.0)
       );
-      vec2 r = vec2(
-        fbm(p + 4.0 * q + vec2(1.7, 9.2) + t * 0.1),
-        fbm(p + 4.0 * q + vec2(8.3, 2.8) + t * 0.08)
-      );
-      return fbm(p + 4.0 * r);
     }
 
-    // Metaball field
-    float metaball(vec2 p, vec2 center, float radius) {
-      float d = length(p - center);
-      return (radius * radius) / (d * d + 0.0005);
+    /* ---- section colors (dark) ---- */
+    vec3 sectionColorDark(float scroll, float r) {
+      vec3 hero    = mix(vec3(0.1, 0.4, 1.0), vec3(0.5, 0.8, 1.0), r);
+      vec3 about   = mix(vec3(0.5, 0.0, 1.0), vec3(0.0, 0.8, 0.93), r);
+      vec3 proj    = mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 0.13, 0.0), r);
+      vec3 contact = mix(vec3(0.0, 0.8, 0.6), vec3(0.6, 1.0, 0.93), r);
+
+      float t1 = smoothstep(0.0,  0.2,  scroll);
+      float t2 = smoothstep(0.25, 0.5,  scroll);
+      float t3 = smoothstep(0.55, 0.8,  scroll);
+
+      vec3 c = mix(hero, about, t1);
+      c = mix(c, proj, t2);
+      c = mix(c, contact, t3);
+      return c;
     }
 
-    // ---- DARK THEME color palettes ----
-    void getSectionColorsDark(float scroll, out vec3 col1, out vec3 col2, out vec3 col3) {
-      vec3 h1 = vec3(0.02, 0.08, 0.25);
-      vec3 h2 = vec3(0.1, 0.4, 1.0);
-      vec3 h3 = vec3(0.5, 0.8, 1.0);
+    /* ---- section colors (light) ---- */
+    vec3 sectionColorLight(float scroll, float r) {
+      vec3 hero    = mix(vec3(0.2, 0.45, 0.95), vec3(0.15, 0.35, 0.8), r);
+      vec3 about   = mix(vec3(0.5, 0.15, 0.9), vec3(0.1, 0.55, 0.85), r);
+      vec3 proj    = mix(vec3(0.95, 0.45, 0.05), vec3(0.85, 0.15, 0.0), r);
+      vec3 contact = mix(vec3(0.05, 0.65, 0.5), vec3(0.0, 0.45, 0.35), r);
 
-      vec3 a1 = vec3(0.15, 0.02, 0.35);
-      vec3 a2 = vec3(0.5, 0.0, 1.0);
-      vec3 a3 = vec3(0.0, 0.8, 0.9);
+      float t1 = smoothstep(0.0,  0.2,  scroll);
+      float t2 = smoothstep(0.25, 0.5,  scroll);
+      float t3 = smoothstep(0.55, 0.8,  scroll);
 
-      vec3 p1 = vec3(0.3, 0.05, 0.0);
-      vec3 p2 = vec3(1.0, 0.4, 0.0);
-      vec3 p3 = vec3(1.0, 0.15, 0.05);
-
-      vec3 c1 = vec3(0.02, 0.15, 0.18);
-      vec3 c2 = vec3(0.0, 0.8, 0.6);
-      vec3 c3 = vec3(0.6, 1.0, 0.9);
-
-      float t1 = smoothstep(0.0, 0.15, scroll);
-      float t2 = smoothstep(0.25, 0.45, scroll);
-      float t3 = smoothstep(0.55, 0.75, scroll);
-
-      col1 = mix(h1, a1, t1); col1 = mix(col1, p1, t2); col1 = mix(col1, c1, t3);
-      col2 = mix(h2, a2, t1); col2 = mix(col2, p2, t2); col2 = mix(col2, c2, t3);
-      col3 = mix(h3, a3, t1); col3 = mix(col3, p3, t2); col3 = mix(col3, c3, t3);
-    }
-
-    // ---- LIGHT THEME color palettes (softer, pastel-ish) ----
-    void getSectionColorsLight(float scroll, out vec3 col1, out vec3 col2, out vec3 col3) {
-      vec3 h1 = vec3(0.85, 0.9, 1.0);
-      vec3 h2 = vec3(0.3, 0.55, 1.0);
-      vec3 h3 = vec3(0.15, 0.35, 0.85);
-
-      vec3 a1 = vec3(0.9, 0.85, 1.0);
-      vec3 a2 = vec3(0.55, 0.2, 0.9);
-      vec3 a3 = vec3(0.1, 0.6, 0.8);
-
-      vec3 p1 = vec3(1.0, 0.92, 0.85);
-      vec3 p2 = vec3(1.0, 0.5, 0.1);
-      vec3 p3 = vec3(0.9, 0.2, 0.05);
-
-      vec3 c1 = vec3(0.88, 1.0, 0.95);
-      vec3 c2 = vec3(0.1, 0.7, 0.55);
-      vec3 c3 = vec3(0.0, 0.5, 0.4);
-
-      float t1 = smoothstep(0.0, 0.15, scroll);
-      float t2 = smoothstep(0.25, 0.45, scroll);
-      float t3 = smoothstep(0.55, 0.75, scroll);
-
-      col1 = mix(h1, a1, t1); col1 = mix(col1, p1, t2); col1 = mix(col1, c1, t3);
-      col2 = mix(h2, a2, t1); col2 = mix(col2, p2, t2); col2 = mix(col2, c2, t3);
-      col3 = mix(h3, a3, t1); col3 = mix(col3, p3, t2); col3 = mix(col3, c3, t3);
+      vec3 c = mix(hero, about, t1);
+      c = mix(c, proj, t2);
+      c = mix(c, contact, t3);
+      return c;
     }
 
     void main() {
-      vec2 uv = vUv;
-      float aspect = uResolution.x / uResolution.y;
-      vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
-
+      float t = uTime;
       float scroll = uScrollProgress;
+      float rnd = aRandom;
 
-      // Turbulence
-      float turbulence = 0.6
-        + smoothstep(0.15, 0.35, scroll) * 0.4
-        + smoothstep(0.35, 0.55, scroll) * 0.8
-        - smoothstep(0.65, 0.85, scroll) * 0.6;
+      /* -- flow field displacement -- */
+      float speed = 0.3 + scroll * 0.4;
+      speed += smoothstep(0.35, 0.55, scroll) * 0.6;
+      speed -= smoothstep(0.7, 0.9, scroll) * 0.3;
 
-      float speed = 0.3 + scroll * 0.5 + smoothstep(0.35, 0.55, scroll) * 0.7;
-      float t = uTime * speed * 0.12;
+      vec3 flow = flowField(position, t * speed) * (0.4 + speed * 0.3);
 
-      // --- Metaballs ---
-      vec2 b1 = vec2(sin(t * 0.7) * 0.8, cos(t * 0.5) * 0.5);
-      vec2 b2 = vec2(cos(t * 0.4 + 1.0) * 0.6, sin(t * 0.8 + 0.5) * 0.6);
-      vec2 b3 = vec2(sin(t * 0.6 + 2.0) * 0.9, cos(t * 0.3 + 1.0) * 0.4);
-      vec2 b4 = vec2(cos(t * 0.9 + 3.0) * 0.5, sin(t * 0.6 + 2.0) * 0.7);
-      vec2 b5 = vec2(sin(t * 0.3 + 4.0) * 0.7, cos(t * 0.7 + 3.0) * 0.5);
-      vec2 b6 = vec2(cos(t * 0.5 + 5.0) * 0.6, sin(t * 0.4 + 4.0) * 0.8);
-      vec2 b7 = vec2(sin(t * 0.8 + 1.5) * 0.4, cos(t * 0.9 + 2.5) * 0.6);
+      vec3 pos = position + flow;
 
-      float blobSize = 0.14 + turbulence * 0.08;
+      /* -- mouse repulsion -- */
+      vec2 mouseWorld = (uMouse - 0.5) * vec2(5.5, 3.2);
+      vec2 diff = pos.xy - mouseWorld;
+      float mDist = length(diff);
+      float repel = uMouseInfluence * 0.6 / (mDist * mDist + 0.4);
+      pos.xy += normalize(diff + 0.001) * repel * 0.25;
 
-      float field = 0.0;
-      field += metaball(p, b1, blobSize * 1.3);
-      field += metaball(p, b2, blobSize * 1.1);
-      field += metaball(p, b3, blobSize * 0.9);
-      field += metaball(p, b4, blobSize * 1.0);
-      field += metaball(p, b5, blobSize * 1.2);
-      field += metaball(p, b6, blobSize * 0.8);
-      field += metaball(p, b7, blobSize * 1.0);
-
-      // --- Mouse interaction ---
-      vec2 mouseP = (uMouse - 0.5) * vec2(aspect, 1.0);
-      float mouseDist = length(p - mouseP);
-      float mouseField = uMouseInfluence * 0.15 / (mouseDist * mouseDist + 0.008);
-      field += mouseField;
-
-      // --- Click ripple ---
-      if (uRipple > 0.01) {
-        float rWave = sin(mouseDist * 25.0 - uRippleTime * 10.0) * 0.5 + 0.5;
-        float rFade = exp(-uRippleTime * 2.5) * uRipple;
-        float rRing = smoothstep(0.03, 0.0, abs(mouseDist - uRippleTime * 0.4));
-        field += (rWave * 0.4 + rRing * 0.6) * rFade;
-      }
-
-      // === COLOR BURST on section transition ===
-      float burstEffect = 0.0;
-      vec3 burstColor = vec3(0.0);
+      /* -- burst effect -- */
       if (uBurst > 0.01) {
-        float bt = uBurstTime;
-        // Expanding rings from center
-        float ringDist = length(p);
-        // Multiple concentric shockwaves
-        float wave1 = smoothstep(0.02, 0.0, abs(ringDist - bt * 1.2)) * exp(-bt * 1.5);
-        float wave2 = smoothstep(0.04, 0.0, abs(ringDist - bt * 0.8 + 0.1)) * exp(-bt * 1.8);
-        float wave3 = smoothstep(0.06, 0.0, abs(ringDist - bt * 1.5 + 0.05)) * exp(-bt * 2.0);
+        vec3 burstDir = normalize(pos + 0.001);
+        float force = uBurst * exp(-uBurstTime * 1.8) * 2.5;
+        pos += burstDir * force * (0.4 + rnd * 0.8);
 
-        // Splash particles — noise-driven scattered bright spots
-        float splash = snoise(p * 6.0 + bt * 2.0) * 0.5 + 0.5;
-        splash *= exp(-bt * 2.0);
-        splash *= smoothstep(bt * 1.5, bt * 0.3, ringDist); // contained within expanding radius
-
-        // Radial streaks
-        float angle = atan(p.y, p.x);
-        float streaks = sin(angle * 12.0 + bt * 5.0) * 0.5 + 0.5;
-        streaks *= smoothstep(bt * 1.2 + 0.1, bt * 0.5, ringDist);
-        streaks *= exp(-bt * 1.8);
-
-        burstEffect = (wave1 + wave2 + wave3) * 0.6 + splash * 0.4 + streaks * 0.3;
-        burstEffect *= uBurst;
-        burstEffect = clamp(burstEffect, 0.0, 1.0);
-
-        // Burst color: mix of current and next section colors (bright version)
-        vec3 bColDeep, bColMid, bColBright;
-        if (uLightMode > 0.5) {
-          getSectionColorsLight(uBurstScroll, bColDeep, bColMid, bColBright);
-        } else {
-          getSectionColorsDark(uBurstScroll, bColDeep, bColMid, bColBright);
-        }
-        burstColor = mix(bColBright, bColMid, splash);
-        // Make it extra vivid
-        burstColor = mix(burstColor, vec3(1.0), 0.2);
+        // Swirl during burst
+        float angle = uBurstTime * 3.0 * (rnd - 0.5);
+        float cosA = cos(angle * 0.3);
+        float sinA = sin(angle * 0.3);
+        pos.xy = mat2(cosA, -sinA, sinA, cosA) * pos.xy;
       }
 
-      // --- Domain-warped noise ---
-      float warp = warpedNoise(p * 1.5 + t * 0.3, t) * turbulence;
-      field += warp * 0.5;
-
-      // --- Secondary noise ---
-      float detail = snoise(p * 8.0 + t * 0.5) * 0.15;
-      field += detail;
-
-      // Boost field during burst
-      field += burstEffect * 0.5;
-
-      // --- Blob thresholds ---
-      float blobCore = smoothstep(0.85, 1.4, field);
-      float blobGlow = smoothstep(0.5, 0.85, field);
-      float blobOuter = smoothstep(0.3, 0.5, field);
-
-      // --- Section colors (theme-aware) ---
-      vec3 colDeep, colMid, colBright;
+      /* -- color -- */
+      vec3 col;
       if (uLightMode > 0.5) {
-        getSectionColorsLight(scroll, colDeep, colMid, colBright);
+        col = sectionColorLight(scroll, rnd);
       } else {
-        getSectionColorsDark(scroll, colDeep, colMid, colBright);
+        col = sectionColorDark(scroll, rnd);
       }
 
-      // Mix colors based on field intensity
-      vec3 coreColor = mix(colMid, colBright, blobCore * 0.8 + detail);
-      vec3 glowColor = mix(colDeep, colMid, blobGlow);
-      vec3 outerColor = colDeep * 0.5;
+      // Brighten during burst
+      col = mix(col, col + 0.3, uBurst * exp(-uBurstTime * 2.0));
 
-      vec3 color = outerColor;
-      color = mix(color, glowColor, blobGlow);
-      color = mix(color, coreColor, blobCore);
+      vColor = col;
 
-      // Edge highlight
-      float edge = smoothstep(0.75, 0.85, field) - smoothstep(0.85, 0.95, field);
-      color += colBright * edge * 0.6;
+      /* -- project to screen -- */
+      vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+      float depth = -mv.z;
 
-      // --- Blend in burst color ---
-      color = mix(color, burstColor, burstEffect * 0.7);
+      /* -- depth-of-field simulation -- */
+      float dof = smoothstep(2.0, 6.0, depth);
+      vAlpha = mix(0.85, 0.15, dof);
+      vDist = depth;
 
-      // --- Vignette ---
-      float vignette = 1.0 - length(vUv - 0.5) * 0.8;
-      vignette = smoothstep(0.0, 1.0, vignette);
+      // Burst boosts alpha
+      vAlpha += uBurst * exp(-uBurstTime * 2.0) * 0.3;
+      vAlpha = clamp(vAlpha, 0.0, 1.0);
 
-      // --- Alpha ---
-      float alpha = blobOuter * 0.25 + blobGlow * 0.3 + blobCore * 0.35;
-      alpha *= vignette;
-      alpha = alpha * 1.4;
-
-      // Burst adds extra alpha (the splash is bright)
-      alpha += burstEffect * 0.5;
-
-      alpha = clamp(alpha, 0.0, 0.85);
-
-      float endFade = 1.0 - smoothstep(0.9, 1.0, scroll) * 0.3;
-      alpha *= endFade;
-
-      // In light mode, reduce alpha so it's more subtle on white
+      // Light mode: reduce alpha
       if (uLightMode > 0.5) {
-        alpha *= 0.65;
+        vAlpha *= 0.7;
       }
+
+      float baseSize = aSize * uPixelRatio;
+      gl_PointSize = baseSize * (250.0 / depth) * mix(1.0, 1.4, dof);
+      gl_PointSize = clamp(gl_PointSize, 1.0, 64.0);
+
+      gl_Position = projectionMatrix * mv;
+    }
+  `;
+
+  const particleFrag = `
+    precision highp float;
+
+    varying vec3 vColor;
+    varying float vAlpha;
+    varying float vDist;
+
+    void main() {
+      float dist = length(gl_PointCoord - 0.5);
+      if (dist > 0.5) discard;
+
+      /* soft circle with glow halo */
+      float core = smoothstep(0.5, 0.15, dist);
+      float glow = smoothstep(0.5, 0.0, dist) * 0.3;
+      float alpha = (core * 0.7 + glow) * vAlpha;
+
+      /* bright center */
+      vec3 color = vColor;
+      color += vec3(0.2) * core * core;
 
       gl_FragColor = vec4(color, alpha);
     }
   `;
 
-  /* ---------- Three.js Setup ---------- */
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true,
-    antialias: false,
-    powerPreference: isMobile ? 'low-power' : 'high-performance'
-  });
+  /* ---------- Line Shaders ---------- */
+  const lineVert = `
+    attribute float aAlpha;
+    varying float vLineAlpha;
+    varying vec3 vLineColor;
 
-  const pixelRatio = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
-  renderer.setPixelRatio(pixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    void main() {
+      vLineAlpha = aAlpha;
+      vLineColor = color;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const lineFrag = `
+    precision highp float;
+    varying float vLineAlpha;
+    varying vec3 vLineColor;
+
+    void main() {
+      gl_FragColor = vec4(vLineColor, vLineAlpha * 0.2);
+    }
+  `;
+
+  /* ---------- Create Particles ---------- */
+  const positions   = new Float32Array(COUNT * 3);
+  const sizes       = new Float32Array(COUNT);
+  const randoms     = new Float32Array(COUNT);
+
+  for (let i = 0; i < COUNT; i++) {
+    const i3 = i * 3;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = Math.pow(Math.random(), 0.6) * 3.0 + 0.3;
+
+    positions[i3]     = r * Math.sin(phi) * Math.cos(theta);
+    positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i3 + 2] = (Math.random() - 0.5) * 2.5;
+
+    sizes[i]   = Math.random() * 4.0 + 1.0;
+    randoms[i] = Math.random();
+  }
+
+  const particleGeo = new THREE.BufferGeometry();
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particleGeo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
+  particleGeo.setAttribute('aRandom',  new THREE.BufferAttribute(randoms, 1));
 
   const uniforms = {
     uTime:           { value: 0 },
     uScrollProgress: { value: 0 },
     uMouse:          { value: new THREE.Vector2(0.5, 0.5) },
     uMouseInfluence: { value: 0 },
-    uRipple:         { value: 0 },
-    uRippleTime:     { value: 0 },
-    uResolution:     { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     uBurst:          { value: 0 },
     uBurstTime:      { value: 0 },
-    uBurstScroll:    { value: 0 },
+    uPixelRatio:     { value: dpr },
     uLightMode:      { value: 0 }
   };
 
-  const material = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
+  const particleMat = new THREE.ShaderMaterial({
+    vertexShader: particleVert,
+    fragmentShader: particleFrag,
     uniforms,
     transparent: true,
-    depthWrite: false
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
   });
 
-  const geometry = new THREE.PlaneGeometry(2, 2);
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+  const particles = new THREE.Points(particleGeo, particleMat);
+  group.add(particles);
+
+  /* ---------- Create Connecting Lines ---------- */
+  // Pick random pairs and only draw if they're close enough (computed in render loop)
+  const linePairs = [];
+  for (let i = 0; i < LINE_COUNT; i++) {
+    const a = Math.floor(Math.random() * COUNT);
+    let b = Math.floor(Math.random() * COUNT);
+    if (b === a) b = (a + 1) % COUNT;
+    linePairs.push(a, b);
+  }
+
+  const linePositions = new Float32Array(LINE_COUNT * 6);
+  const lineColors    = new Float32Array(LINE_COUNT * 6);
+  const lineAlphas    = new Float32Array(LINE_COUNT * 2);
+
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  lineGeo.setAttribute('color',    new THREE.BufferAttribute(lineColors, 3));
+  lineGeo.setAttribute('aAlpha',   new THREE.BufferAttribute(lineAlphas, 1));
+
+  const lineMat = new THREE.ShaderMaterial({
+    vertexShader: lineVert,
+    fragmentShader: lineFrag,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexColors: true
+  });
+
+  const lines = new THREE.LineSegments(lineGeo, lineMat);
+  group.add(lines);
 
   /* ---------- Interaction State ---------- */
   const state = {
     scrollProgress: 0,
     targetScrollProgress: 0,
-    mouseX: 0.5,
-    mouseY: 0.5,
-    targetMouseX: 0.5,
-    targetMouseY: 0.5,
-    mouseInfluence: 0,
-    targetMouseInfluence: 0,
-    ripple: 0,
-    rippleTime: 0,
-    isRippling: false,
-    burst: 0,
-    burstTime: 0,
-    burstScroll: 0,
-    isBursting: false,
-    lightMode: 0
+    mouseX: 0.5, mouseY: 0.5,
+    targetMouseX: 0.5, targetMouseY: 0.5,
+    mouseInfluence: 0, targetMouseInfluence: 0,
+    burst: 0, burstTime: 0, isBursting: false,
+    lightMode: 0,
+    cameraTargetX: 0, cameraTargetY: 0
   };
 
-  /* ---------- Public API for app.js ---------- */
+  /* ---------- Public API ---------- */
   window.fluidState = state;
   window.fluidUniforms = uniforms;
 
   window.triggerBurst = function (scrollPos) {
     state.burst = 1.0;
     state.burstTime = 0;
-    state.burstScroll = scrollPos;
     state.isBursting = true;
   };
 
@@ -396,31 +345,37 @@
 
   /* ---------- Events ---------- */
   function onScroll() {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    state.targetScrollProgress = docHeight > 0 ? window.scrollY / docHeight : 0;
+    const docH = document.documentElement.scrollHeight - window.innerHeight;
+    state.targetScrollProgress = docH > 0 ? window.scrollY / docH : 0;
   }
 
   function onMouseMove(e) {
     state.targetMouseX = e.clientX / window.innerWidth;
     state.targetMouseY = 1.0 - e.clientY / window.innerHeight;
     state.targetMouseInfluence = 1.0;
+    state.cameraTargetX = (e.clientX / window.innerWidth - 0.5) * 0.12;
+    state.cameraTargetY = (e.clientY / window.innerHeight - 0.5) * -0.08;
   }
 
   function onMouseLeave() {
     state.targetMouseInfluence = 0;
+    state.cameraTargetX = 0;
+    state.cameraTargetY = 0;
   }
 
-  function onClick(e) {
-    state.targetMouseX = e.clientX / window.innerWidth;
-    state.targetMouseY = 1.0 - e.clientY / window.innerHeight;
-    state.ripple = 1.0;
-    state.rippleTime = 0;
-    state.isRippling = true;
+  function onClick() {
+    // Small burst on click
+    if (!state.isBursting) {
+      state.burst = 0.4;
+      state.burstTime = 0;
+      state.isBursting = true;
+    }
   }
 
   function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -429,55 +384,136 @@
   window.addEventListener('click', onClick);
   window.addEventListener('resize', onResize);
 
+  /* ---------- Section color helpers (JS, for lines) ---------- */
+  function lerpColor(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  }
+
+  function getSectionColor(scroll, rnd, light) {
+    const palettes = light ? [
+      [[0.2,0.45,0.95], [0.15,0.35,0.8]],
+      [[0.5,0.15,0.9],  [0.1,0.55,0.85]],
+      [[0.95,0.45,0.05],[0.85,0.15,0.0]],
+      [[0.05,0.65,0.5], [0.0,0.45,0.35]]
+    ] : [
+      [[0.1,0.4,1.0],  [0.5,0.8,1.0]],
+      [[0.5,0.0,1.0],  [0.0,0.8,0.93]],
+      [[1.0,0.4,0.0],  [1.0,0.13,0.0]],
+      [[0.0,0.8,0.6],  [0.6,1.0,0.93]]
+    ];
+
+    function getCol(pal) { return lerpColor(pal[0], pal[1], rnd); }
+
+    const t1 = Math.max(0, Math.min(1, (scroll - 0.0) / 0.2));
+    const t2 = Math.max(0, Math.min(1, (scroll - 0.25) / 0.25));
+    const t3 = Math.max(0, Math.min(1, (scroll - 0.55) / 0.25));
+
+    let c = lerpColor(getCol(palettes[0]), getCol(palettes[1]), t1);
+    c = lerpColor(c, getCol(palettes[2]), t2);
+    c = lerpColor(c, getCol(palettes[3]), t3);
+    return c;
+  }
+
   /* ---------- Render Loop ---------- */
+  // We need particle world positions for lines — extract from shader logic in JS
+  // Simplified: use base positions + simple sin-based flow (approximation)
+  const worldPositions = new Float32Array(COUNT * 3);
+
   let lastTime = 0;
   const FPS_INTERVAL = isMobile ? 1000 / 30 : 0;
 
   function animate(time) {
     requestAnimationFrame(animate);
-
     if (isMobile && time - lastTime < FPS_INTERVAL) return;
     lastTime = time;
 
+    const t = time * 0.001;
     const dt = 0.016;
 
     // Smooth interpolation
     state.scrollProgress += (state.targetScrollProgress - state.scrollProgress) * 0.04;
     state.mouseX += (state.targetMouseX - state.mouseX) * 0.06;
     state.mouseY += (state.targetMouseY - state.mouseY) * 0.06;
-    state.mouseInfluence += (state.targetMouseInfluence - state.mouseInfluence) * 0.04;
-    state.targetMouseInfluence *= 0.995;
-
-    // Ripple decay
-    if (state.isRippling) {
-      state.rippleTime += dt;
-      state.ripple *= 0.96;
-      if (state.ripple < 0.01) {
-        state.ripple = 0;
-        state.isRippling = false;
-      }
-    }
+    state.mouseInfluence += (state.targetMouseInfluence - state.mouseInfluence) * 0.05;
+    state.targetMouseInfluence *= 0.993;
 
     // Burst decay
     if (state.isBursting) {
       state.burstTime += dt;
-      state.burst *= 0.975;
-      if (state.burst < 0.01) {
-        state.burst = 0;
-        state.isBursting = false;
-      }
+      state.burst *= 0.97;
+      if (state.burst < 0.01) { state.burst = 0; state.isBursting = false; }
     }
 
-    uniforms.uTime.value = time * 0.001;
+    // Camera tilt (3D parallax)
+    group.rotation.y += (state.cameraTargetX - group.rotation.y) * 0.03;
+    group.rotation.x += (state.cameraTargetY - group.rotation.x) * 0.03;
+
+    // Update uniforms
+    uniforms.uTime.value = t;
     uniforms.uScrollProgress.value = state.scrollProgress;
     uniforms.uMouse.value.set(state.mouseX, state.mouseY);
     uniforms.uMouseInfluence.value = state.mouseInfluence;
-    uniforms.uRipple.value = state.ripple;
-    uniforms.uRippleTime.value = state.rippleTime;
     uniforms.uBurst.value = state.burst;
     uniforms.uBurstTime.value = state.burstTime;
-    uniforms.uBurstScroll.value = state.burstScroll;
     uniforms.uLightMode.value = state.lightMode;
+
+    // Approximate world positions for lines (simplified flow field in JS)
+    const scroll = state.scrollProgress;
+    const speed = 0.3 + scroll * 0.4 + (scroll > 0.35 && scroll < 0.55 ? 0.6 : 0);
+    const flowT = t * speed;
+    const light = state.lightMode > 0.5;
+
+    for (let i = 0; i < COUNT; i++) {
+      const i3 = i * 3;
+      const bx = positions[i3], by = positions[i3+1], bz = positions[i3+2];
+
+      // Simplified flow (sin-based, matching shader noise roughly)
+      const fx = Math.sin(by * 0.8 + flowT * 0.15) * 0.4 * speed;
+      const fy = Math.cos(bx * 0.8 + flowT * 0.12) * 0.4 * speed;
+      const fz = Math.sin(bx * 0.6 + flowT * 0.1) * 0.2 * speed;
+
+      worldPositions[i3]     = bx + fx;
+      worldPositions[i3 + 1] = by + fy;
+      worldPositions[i3 + 2] = bz + fz;
+    }
+
+    // Update lines
+    const lineDistThreshold = 1.2 + state.burst * 2.0;
+
+    for (let i = 0; i < LINE_COUNT; i++) {
+      const a = linePairs[i * 2];
+      const b = linePairs[i * 2 + 1];
+      const a3 = a * 3, b3 = b * 3;
+      const i6 = i * 6;
+      const i2 = i * 2;
+
+      const ax = worldPositions[a3], ay = worldPositions[a3+1], az = worldPositions[a3+2];
+      const bx = worldPositions[b3], by = worldPositions[b3+1], bz = worldPositions[b3+2];
+
+      linePositions[i6]     = ax; linePositions[i6+1] = ay; linePositions[i6+2] = az;
+      linePositions[i6 + 3] = bx; linePositions[i6+4] = by; linePositions[i6+5] = bz;
+
+      const dx = ax - bx, dy = ay - by, dz = az - bz;
+      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+      // Alpha based on distance
+      const alpha = dist < lineDistThreshold
+        ? (1.0 - dist / lineDistThreshold) * 0.8
+        : 0.0;
+
+      lineAlphas[i2]     = alpha;
+      lineAlphas[i2 + 1] = alpha;
+
+      // Color from section palette
+      const rnd = randoms[a];
+      const col = getSectionColor(scroll, rnd, light);
+      lineColors[i6]   = col[0]; lineColors[i6+1] = col[1]; lineColors[i6+2] = col[2];
+      lineColors[i6+3] = col[0]; lineColors[i6+4] = col[1]; lineColors[i6+5] = col[2];
+    }
+
+    lineGeo.attributes.position.needsUpdate = true;
+    lineGeo.attributes.color.needsUpdate = true;
+    lineGeo.attributes.aAlpha.needsUpdate = true;
 
     renderer.render(scene, camera);
   }
