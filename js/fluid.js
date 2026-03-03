@@ -99,23 +99,23 @@
       return (radius * radius) / (d * d + 0.0005);
     }
 
-    /* ---- DARK palette (subdued for readability) ---- */
+    /* ---- DARK palette (atmospheric, not overwhelming) ---- */
     void getSectionColorsDark(float scroll, out vec3 col1, out vec3 col2, out vec3 col3) {
-      vec3 h1 = vec3(0.01, 0.04, 0.14);
-      vec3 h2 = vec3(0.07, 0.25, 0.65);
-      vec3 h3 = vec3(0.25, 0.5, 0.75);
+      vec3 h1 = vec3(0.02, 0.06, 0.18);
+      vec3 h2 = vec3(0.08, 0.3, 0.75);
+      vec3 h3 = vec3(0.3, 0.55, 0.85);
 
-      vec3 a1 = vec3(0.08, 0.01, 0.2);
-      vec3 a2 = vec3(0.3, 0.0, 0.6);
-      vec3 a3 = vec3(0.0, 0.45, 0.55);
+      vec3 a1 = vec3(0.1, 0.02, 0.25);
+      vec3 a2 = vec3(0.35, 0.0, 0.7);
+      vec3 a3 = vec3(0.0, 0.5, 0.65);
 
-      vec3 p1 = vec3(0.18, 0.03, 0.0);
-      vec3 p2 = vec3(0.6, 0.25, 0.0);
-      vec3 p3 = vec3(0.6, 0.1, 0.03);
+      vec3 p1 = vec3(0.2, 0.04, 0.0);
+      vec3 p2 = vec3(0.7, 0.3, 0.0);
+      vec3 p3 = vec3(0.7, 0.12, 0.04);
 
-      vec3 c1 = vec3(0.01, 0.08, 0.1);
-      vec3 c2 = vec3(0.0, 0.45, 0.3);
-      vec3 c3 = vec3(0.25, 0.55, 0.45);
+      vec3 c1 = vec3(0.02, 0.1, 0.12);
+      vec3 c2 = vec3(0.0, 0.5, 0.35);
+      vec3 c3 = vec3(0.3, 0.6, 0.5);
 
       float t1 = smoothstep(0.0, 0.15, scroll);
       float t2 = smoothstep(0.25, 0.45, scroll);
@@ -274,18 +274,18 @@
       float vignette = 1.0 - length(vUv - 0.5) * 0.9;
       vignette = smoothstep(0.0, 1.0, vignette);
 
-      /* --- alpha (subdued for text readability) --- */
-      float alpha = blobOuter * 0.12 + blobGlow * 0.18 + blobCore * 0.22;
+      /* --- alpha (atmospheric but readable) --- */
+      float alpha = blobOuter * 0.14 + blobGlow * 0.22 + blobCore * 0.28;
       alpha *= vignette;
-      alpha *= 1.1;
-      alpha += burstEffect * 0.2;
-      alpha = clamp(alpha, 0.0, 0.5);
+      alpha *= 1.2;
+      alpha += burstEffect * 0.25;
+      alpha = clamp(alpha, 0.0, 0.6);
 
       float endFade = 1.0 - smoothstep(0.9, 1.0, scroll) * 0.3;
       alpha *= endFade;
 
       if (uLightMode > 0.5) {
-        alpha *= 0.4;
+        alpha *= 0.45;
       }
 
       gl_FragColor = vec4(color, alpha);
