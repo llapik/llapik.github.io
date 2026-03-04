@@ -12,7 +12,7 @@
   --bg-rgb: 5, 5, 5;
   --text: #e8e8e8;
   --text-rgb: 232, 232, 232;
-  --text-muted: rgba(232, 232, 232, 0.35);
+  --text-muted: rgba(232, 232, 232, 0.7);
   --text-strong: #ffffff;
   --accent: #ff6600;
   --accent-rgb: 255, 102, 0;
@@ -32,7 +32,7 @@
   --bg-rgb: 242, 242, 244;
   --text: #1a1a2e;
   --text-rgb: 26, 26, 46;
-  --text-muted: rgba(26, 26, 46, 0.3);
+  --text-muted: rgba(26, 26, 46, 0.7);
   --text-strong: #0a0a1a;
   --accent: #e05500;
   --accent-rgb: 224, 85, 0;
@@ -265,6 +265,8 @@ section {
   background: linear-gradient(135deg, #3388ff, #aa44ff);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 0 transparent);
 }
 
 .hero-tagline {

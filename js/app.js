@@ -110,30 +110,6 @@
   }
   window.addEventListener('scroll', updateActiveNav, { passive: true });
 
-  /* ---------- Section Burst on Enter ---------- */
-  var lastSectionIndex = 0;
-  var sectionIds = ['hero', 'about', 'work', 'contact'];
-  var sectionScrollMap = { hero: 0, about: 0.15, work: 0.45, contact: 0.75 };
-
-  var burstObserver = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (!entry.isIntersecting) return;
-      var id = entry.target.id;
-      var idx = sectionIds.indexOf(id);
-      if (idx > 0 && idx !== lastSectionIndex) {
-        lastSectionIndex = idx;
-        if (typeof window.triggerBurst === 'function') {
-          window.triggerBurst(sectionScrollMap[id] || 0.5);
-        }
-      }
-    });
-  }, { root: null, threshold: 0.15 });
-
-  sectionIds.forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) burstObserver.observe(el);
-  });
-
   /* ---------- Section Labels Reveal ---------- */
   var labelObserver = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
