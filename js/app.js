@@ -59,18 +59,22 @@
     });
   }
 
-  /* ---------- Hero Parallax ---------- */
+  /* ---------- Hero Parallax (disabled on touch for perf) ---------- */
   var heroContent = document.querySelector('.hero-content');
-  window.addEventListener('scroll', function () {
-    if (!heroContent) return;
-    var s = window.scrollY;
-    var h = window.innerHeight;
-    if (s < h) {
-      var p = s / h;
-      heroContent.style.opacity = String(1 - p * 1.3);
-      heroContent.style.transform = 'translateY(' + (s * 0.35) + 'px) scale(' + (1 - p * 0.05) + ')';
-    }
-  }, { passive: true });
+  var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  if (!isTouchDevice) {
+    window.addEventListener('scroll', function () {
+      if (!heroContent) return;
+      var s = window.scrollY;
+      var h = window.innerHeight;
+      if (s < h) {
+        var p = s / h;
+        heroContent.style.opacity = String(1 - p * 1.3);
+        heroContent.style.transform = 'translateY(' + (s * 0.35) + 'px) scale(' + (1 - p * 0.05) + ')';
+      }
+    }, { passive: true });
+  }
 
   /* ---------- Navigation ---------- */
   var nav = document.getElementById('nav');
@@ -83,13 +87,15 @@
 
   if (navToggle && navLinks) {
     navToggle.addEventListener('click', function () {
+      var isOpen = navLinks.classList.toggle('open');
       navToggle.classList.toggle('active');
-      navLinks.classList.toggle('open');
+      document.body.style.overflow = isOpen ? 'hidden' : '';
     });
     navLinks.querySelectorAll('a').forEach(function (link) {
       link.addEventListener('click', function () {
         navToggle.classList.remove('active');
         navLinks.classList.remove('open');
+        document.body.style.overflow = '';
       });
     });
   }

@@ -26,7 +26,7 @@
 
   // Hover detection on interactive elements
   document.addEventListener('mouseover', (e) => {
-    const interactive = e.target.closest('a, button, .interactive, .project-card, .skill-tag, .contact-link');
+    const interactive = e.target.closest('a, button, .interactive, .project-row, .contact-link, .theme-toggle, .nav-toggle');
     if (interactive) {
       cursor.classList.add('cursor--hover');
       isHovering = true;
@@ -34,7 +34,7 @@
   });
 
   document.addEventListener('mouseout', (e) => {
-    const interactive = e.target.closest('a, button, .interactive, .project-card, .skill-tag, .contact-link');
+    const interactive = e.target.closest('a, button, .interactive, .project-row, .contact-link, .theme-toggle, .nav-toggle');
     if (interactive) {
       cursor.classList.remove('cursor--hover');
       isHovering = false;

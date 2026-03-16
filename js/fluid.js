@@ -12,8 +12,11 @@
   if (!canvas) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent)
-                   || window.innerWidth < 768;
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+  const isMobile = isTouchDevice && isSmallScreen;
+  const isTablet = isTouchDevice && !isSmallScreen;
+  const isLowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : isMobile;
 
   if (prefersReducedMotion) {
     canvas.style.display = 'none';
@@ -29,8 +32,11 @@
     }
   `;
 
+  const fbmOctaves = (isMobile || isLowEnd) ? 3 : 6;
+
   const fragmentShader = `
-    precision highp float;
+    precision ${ isMobile ? 'mediump' : 'highp' } float;
+    #define FBM_OCTAVES ${fbmOctaves}
 
     varying vec2 vUv;
 
@@ -41,9 +47,6 @@
     uniform float uRipple;
     uniform float uRippleTime;
     uniform vec2  uResolution;
-    uniform float uBurst;
-    uniform float uBurstTime;
-    uniform float uBurstScroll;
     uniform float uLightMode;
 
     /* ---- noise ---- */
@@ -78,7 +81,7 @@
     float fbm(vec2 p) {
       float val = 0.0, amp = 0.5, freq = 1.0;
       mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < FBM_OCTAVES; i++) {
         val += amp * snoise(p * freq);
         p = rot * p;
         freq *= 2.0;
@@ -201,47 +204,10 @@
         field += (rWave * 0.4 + rRing * 0.6) * rFade;
       }
 
-      /* === burst on section enter === */
-      float burstEffect = 0.0;
-      vec3 burstColor = vec3(0.0);
-
-      if (uBurst > 0.01) {
-        float bt = uBurstTime;
-        float ringDist = length(p);
-
-        float wave1 = smoothstep(0.02, 0.0, abs(ringDist - bt * 1.2)) * exp(-bt * 1.5);
-        float wave2 = smoothstep(0.04, 0.0, abs(ringDist - bt * 0.8 + 0.1)) * exp(-bt * 1.8);
-        float wave3 = smoothstep(0.06, 0.0, abs(ringDist - bt * 1.5 + 0.05)) * exp(-bt * 2.0);
-
-        float splash = snoise(p * 6.0 + bt * 2.0) * 0.5 + 0.5;
-        splash *= exp(-bt * 2.0);
-        splash *= smoothstep(bt * 1.5, bt * 0.3, ringDist);
-
-        float angle = atan(p.y, p.x);
-        float streaks = sin(angle * 12.0 + bt * 5.0) * 0.5 + 0.5;
-        streaks *= smoothstep(bt * 1.2 + 0.1, bt * 0.5, ringDist);
-        streaks *= exp(-bt * 1.8);
-
-        burstEffect = (wave1 + wave2 + wave3) * 0.6 + splash * 0.4 + streaks * 0.3;
-        burstEffect *= uBurst;
-        burstEffect = clamp(burstEffect, 0.0, 1.0);
-
-        vec3 bColDeep, bColMid, bColBright;
-        if (uLightMode > 0.5) {
-          getSectionColorsLight(uBurstScroll, bColDeep, bColMid, bColBright);
-        } else {
-          getSectionColorsDark(uBurstScroll, bColDeep, bColMid, bColBright);
-        }
-        burstColor = mix(bColBright, bColMid, splash);
-        burstColor = mix(burstColor, vec3(1.0), 0.15);
-      }
-
       /* --- domain-warped noise --- */
       float warp = warpedNoise(p * 1.5 + t * 0.3, t) * turbulence;
       field += warp * 0.5;
       field += snoise(p * 8.0 + t * 0.5) * 0.15;
-      field += burstEffect * 0.4;
-
       /* --- blob thresholds --- */
       float blobCore  = smoothstep(0.85, 1.4, field);
       float blobGlow  = smoothstep(0.5,  0.85, field);
@@ -267,9 +233,6 @@
       float edge = smoothstep(0.75, 0.85, field) - smoothstep(0.85, 0.95, field);
       color += colBright * edge * 0.3;
 
-      /* blend burst */
-      color = mix(color, burstColor, burstEffect * 0.5);
-
       /* --- vignette (stronger — push fluid to edges) --- */
       float vignette = 1.0 - length(vUv - 0.5) * 0.9;
       vignette = smoothstep(0.0, 1.0, vignette);
@@ -278,7 +241,6 @@
       float alpha = blobOuter * 0.14 + blobGlow * 0.22 + blobCore * 0.28;
       alpha *= vignette;
       alpha *= 1.2;
-      alpha += burstEffect * 0.25;
       alpha = clamp(alpha, 0.0, 0.6);
 
       float endFade = 1.0 - smoothstep(0.9, 1.0, scroll) * 0.3;
@@ -298,9 +260,14 @@
     powerPreference: isMobile ? 'low-power' : 'high-performance'
   });
 
-  const pixelRatio = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
+  const pixelRatio = isMobile ? 1 : isTablet ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+
+  /* Render at half resolution on low-end devices */
+  if (isLowEnd && !isMobile) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  }
 
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -313,9 +280,6 @@
     uRipple:         { value: 0 },
     uRippleTime:     { value: 0 },
     uResolution:     { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    uBurst:          { value: 0 },
-    uBurstTime:      { value: 0 },
-    uBurstScroll:    { value: 0 },
     uLightMode:      { value: 0 }
   };
 
@@ -334,20 +298,12 @@
     targetMouseX: 0.5, targetMouseY: 0.5,
     mouseInfluence: 0, targetMouseInfluence: 0,
     ripple: 0, rippleTime: 0, isRippling: false,
-    burst: 0, burstTime: 0, burstScroll: 0, isBursting: false,
     lightMode: 0
   };
 
   /* ---------- Public API ---------- */
   window.fluidState = state;
   window.fluidUniforms = uniforms;
-
-  window.triggerBurst = function (scrollPos) {
-    state.burst = 1.0;
-    state.burstTime = 0;
-    state.burstScroll = scrollPos;
-    state.isBursting = true;
-  };
 
   window.setFluidLightMode = function (isLight) {
     state.lightMode = isLight ? 1.0 : 0.0;
@@ -375,9 +331,13 @@
     state.isRippling = true;
   }
 
+  let resizeTimer;
   function onResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    }, 150);
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -388,7 +348,7 @@
 
   /* ---------- Render Loop ---------- */
   let lastTime = 0;
-  const FPS_INTERVAL = isMobile ? 1000 / 30 : 0;
+  const FPS_INTERVAL = isMobile ? 1000 / 24 : (isTablet || isLowEnd) ? 1000 / 30 : 0;
 
   function animate(time) {
     requestAnimationFrame(animate);
@@ -409,21 +369,12 @@
       if (state.ripple < 0.01) { state.ripple = 0; state.isRippling = false; }
     }
 
-    if (state.isBursting) {
-      state.burstTime += dt;
-      state.burst *= 0.975;
-      if (state.burst < 0.01) { state.burst = 0; state.isBursting = false; }
-    }
-
     uniforms.uTime.value = time * 0.001;
     uniforms.uScrollProgress.value = state.scrollProgress;
     uniforms.uMouse.value.set(state.mouseX, state.mouseY);
     uniforms.uMouseInfluence.value = state.mouseInfluence;
     uniforms.uRipple.value = state.ripple;
     uniforms.uRippleTime.value = state.rippleTime;
-    uniforms.uBurst.value = state.burst;
-    uniforms.uBurstTime.value = state.burstTime;
-    uniforms.uBurstScroll.value = state.burstScroll;
     uniforms.uLightMode.value = state.lightMode;
 
     renderer.render(scene, camera);
