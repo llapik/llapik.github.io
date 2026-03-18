@@ -1,26 +1,26 @@
 [
   {
     "id": 1,
-    "title": "Project Alpha",
-    "description": "A modern web application built with cutting-edge technologies. Features real-time data processing and an intuitive user interface.",
-    "technologies": ["JavaScript", "Three.js", "Node.js"],
+    "title": "AI PC Repair & Optimizer",
+    "description": "Загрузочная USB-флешка (256 ГБ) с локальным AI для диагностики, ремонта, оптимизации и модернизации ПК.",
+    "technologies": ["Python", "JavaScript", "Shell"],
     "image": "",
-    "link": "https://github.com/llapik",
+    "link": "https://github.com/llapik/calcoc",
     "type": "github"
   },
   {
     "id": 2,
-    "title": "Project Beta",
-    "description": "Mobile-first responsive platform with advanced animation systems and seamless user experience across all devices.",
-    "technologies": ["React", "CSS3", "Firebase"],
+    "title": "Multi-Browser Operator",
+    "description": "Десктопное приложение для синхронного управления несколькими окнами на Windows. Все действия мыши и клавиатуры в «ведущем» окне автоматически дублируются во всех «ведомых» окнах.",
+    "technologies": ["Python", "Batchfile"],
     "image": "",
-    "link": "https://github.com/llapik",
+    "link": "https://github.com/llapik/-Multi-Browser-Operator-",
     "type": "github"
   },
   {
     "id": 3,
-    "title": "Project Gamma",
-    "description": "Creative design exploration combining generative art with interactive storytelling and data visualization.",
+    "title": "Elecronic-Journal-teacher",
+    "description": "Десктопное приложение на практически чистом C# с интеграцией MS Access для ведения журнала преподавателя.(файлы на диск потом выгружу)",
     "technologies": ["Python", "TensorFlow", "WebGL"],
     "image": "",
     "link": "https://drive.google.com",
@@ -28,7 +28,7 @@
   },
   {
     "id": 4,
-    "title": "Project Delta",
+    "title": "Coming Soon",
     "description": "Full-stack solution for workflow automation with real-time collaboration features and cloud integration.",
     "technologies": ["TypeScript", "Docker", "PostgreSQL"],
     "image": "",
