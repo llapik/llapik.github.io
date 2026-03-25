@@ -214,6 +214,26 @@ a:hover {
   width: 100%;
 }
 
+/* Language toggle */
+.lang-toggle {
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.lang-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Mobile menu toggle */
 .nav-toggle {
   display: none;

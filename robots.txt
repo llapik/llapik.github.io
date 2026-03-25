@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://llapik.github.io/sitemap.xml
+
+Host: https://llapik.github.io
