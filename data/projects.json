@@ -19,9 +19,9 @@
   },
   {
     "id": 3,
-    "title": "Elecronic-Journal-teacher",
-    "description": "Десктопное приложение на практически чистом C# с интеграцией MS Access для ведения журнала преподавателя.(файлы на диск потом выгружу)",
-    "technologies": ["Python", "TensorFlow", "WebGL"],
+    "title": "Electronic-Journal-teacher",
+    "description": "Десктопное приложение на практически чистом C# с интеграцией MS Access для ведения журнала преподавателя.",
+    "technologies": ["C#", "MS Access"],
     "image": "",
     "link": "https://drive.google.com",
     "type": "gdrive"
