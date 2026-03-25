@@ -96,22 +96,6 @@
 
   /* ---------- About — Word Reveal ---------- */
   const aboutText = document.getElementById('about-text');
-  if (aboutText) {
-    const text = aboutText.textContent.trim();
-    aboutText.innerHTML = '';
-    const words = text.split(/\s+/);
-    words.forEach((word, i) => {
-      const span = document.createElement('span');
-      span.className = 'reveal-word';
-      span.textContent = word;
-      span.style.transitionDelay = (i * 0.03) + 's';
-      aboutText.appendChild(span);
-      // Add space between words
-      if (i < words.length - 1) {
-        aboutText.appendChild(document.createTextNode(' '));
-      }
-    });
-  }
 
   /* ---------- Intersection Observer — Reveal ---------- */
   const observerOptions = {
@@ -131,8 +115,29 @@
     });
   }, observerOptions);
 
-  if (aboutText) {
+  function initWordReveal() {
+    if (!aboutText) return;
+    const text = aboutText.textContent.trim();
+    aboutText.innerHTML = '';
+    const words = text.split(/\s+/);
+    words.forEach((word, i) => {
+      const span = document.createElement('span');
+      span.className = 'reveal-word';
+      span.textContent = word;
+      span.style.transitionDelay = (i * 0.03) + 's';
+      aboutText.appendChild(span);
+      if (i < words.length - 1) {
+        aboutText.appendChild(document.createTextNode(' '));
+      }
+    });
     wordObserver.observe(aboutText);
+  }
+
+  initWordReveal();
+
+  // Re-init on language change
+  if (aboutText) {
+    aboutText.addEventListener('i18n:updated', initWordReveal);
   }
 
   // Card reveal observer
@@ -212,7 +217,8 @@
     } catch (err) {
       console.warn('Could not load projects:', err);
       if (projectsGrid) {
-        projectsGrid.innerHTML = '<p style="color:var(--text-muted);">Проекты загружаются...</p>';
+        const msg = window.i18n ? window.i18n.t('projects.loading') : 'Проекты загружаются...';
+        projectsGrid.innerHTML = '<p style="color:var(--text-muted);">' + escapeHtml(msg) + '</p>';
       }
     }
   }
@@ -267,10 +273,13 @@
 
       const linkLabel = project.type === 'gdrive' ? 'Google Drive' : 'GitHub';
 
+      const projectPrefix = window.i18n ? window.i18n.t('projects.prefix') : 'Проект';
+      const lang = window.i18n ? window.i18n.lang() : 'ru';
+      const desc = (lang === 'en' && project.description_en) ? project.description_en : project.description;
       card.innerHTML = `
-        <div class="project-card-number">Проект ${String(index + 1).padStart(2, '0')}</div>
+        <div class="project-card-number">${escapeHtml(projectPrefix)} ${String(index + 1).padStart(2, '0')}</div>
         <h3 class="project-card-title">${escapeHtml(project.title)}</h3>
-        <p class="project-card-desc">${escapeHtml(project.description)}</p>
+        <p class="project-card-desc">${escapeHtml(desc)}</p>
         <div class="project-card-tech">
           ${(project.technologies || []).map(t =>
             `<span class="tech-badge">${escapeHtml(t)}</span>`
@@ -295,6 +304,19 @@
   }
 
   loadProjects();
+
+  // Re-render projects on language change
+  window.addEventListener('langchange', () => {
+    if (allProjects.length > 0) {
+      const activeFilter = filterBar ? filterBar.querySelector('.filter-btn.active') : null;
+      const tech = activeFilter ? activeFilter.dataset.filter : 'all';
+      if (tech === 'all') {
+        renderProjects(allProjects);
+      } else {
+        renderProjects(allProjects.filter(p => (p.technologies || []).includes(tech)));
+      }
+    }
+  });
 
   /* ---------- Smooth Scroll for anchor links ---------- */
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {

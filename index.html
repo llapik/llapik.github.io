@@ -9,6 +9,9 @@
   <meta name="theme-color" content="#000000">
   <title>llapik — Портфолио разработчика | Александр Стих</title>
   <link rel="canonical" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="en" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="x-default" href="https://llapik.github.io/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
@@ -17,6 +20,7 @@
   <meta property="og:url" content="https://llapik.github.io/">
   <meta property="og:site_name" content="llapik Portfolio">
   <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary">
@@ -71,10 +75,11 @@
     <nav class="nav" id="nav">
       <a href="#hero" class="nav-logo">lla<span>pik</span></a>
       <ul class="nav-links" id="nav-links">
-        <li><a href="#about">О себе</a></li>
-        <li><a href="#projects">Проекты</a></li>
-        <li><a href="#contact">Контакты</a></li>
+        <li><a href="#about" data-i18n="nav.about">О себе</a></li>
+        <li><a href="#projects" data-i18n="nav.projects">Проекты</a></li>
+        <li><a href="#contact" data-i18n="nav.contact">Контакты</a></li>
       </ul>
+      <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
       <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
         <span></span>
         <span></span>
@@ -85,10 +90,10 @@
     <!-- Hero -->
     <section class="hero" id="hero">
       <div class="hero-content">
-        <p class="hero-greeting">Привет, я</p>
+        <p class="hero-greeting" data-i18n="hero.greeting">Привет, я</p>
         <h1 class="hero-name">Alexandr <span class="accent">Stih</span></h1>
-        <p class="hero-tagline">Создаю цифровые продукты на стыке дизайна, кода и безответственности</p>
-        <a href="#projects" class="hero-cta interactive">Смотреть проекты <span>&rarr;</span></a>
+        <p class="hero-tagline" data-i18n="hero.tagline">Создаю цифровые продукты на стыке дизайна, кода и безответственности</p>
+        <a href="#projects" class="hero-cta interactive" data-i18n="hero.cta">Смотреть проекты <span>&rarr;</span></a>
       </div>
       <div class="hero-scroll-hint">
         <span>Scroll</span>
@@ -99,9 +104,9 @@
     <!-- About -->
     <section class="about" id="about">
       <div class="about-wrapper">
-        <h2 class="section-title">О себе</h2>
-        <p class="section-subtitle">Developer & Creative Thinker</p>
-        <p class="about-text" id="about-text">
+        <h2 class="section-title" data-i18n="about.title">О себе</h2>
+        <p class="section-subtitle" data-i18n="about.subtitle">Developer & Creative Thinker</p>
+        <p class="about-text" id="about-text" data-i18n="about.text">
           Я разработчик с фокусом на визуальные впечатления и интересные программные решения. Мне нравится решать сложные задачи путём реализации элегантных цифровых решений, где каждая деталь продумана — от анимации до архитектуры кода. Работаю с современными веб-технологиями, не брезгую нейросетями и всегда ищу способы сделать пользовательский опыт более живым и запоминающимся, а также расширить свой кругозор.
         </p>
         <div class="skills-grid">
@@ -121,10 +126,10 @@
     <section class="projects" id="projects">
       <div class="projects-wrapper">
         <div class="projects-header">
-          <h2 class="section-title">Проекты</h2>
-          <p class="section-subtitle">Избранные работы и эксперименты</p>
+          <h2 class="section-title" data-i18n="projects.title">Проекты</h2>
+          <p class="section-subtitle" data-i18n="projects.subtitle">Избранные работы и эксперименты</p>
           <div class="filter-bar" id="filter-bar">
-            <button class="filter-btn active interactive" data-filter="all">Все</button>
+            <button class="filter-btn active interactive" data-filter="all" data-i18n="projects.all">Все</button>
           </div>
         </div>
         <div class="projects-grid" id="projects-grid">
@@ -136,8 +141,8 @@
     <!-- Contact -->
     <section class="contact" id="contact">
       <div class="contact-wrapper">
-        <h2 class="section-title" style="display:block; text-align:center;">Контакты</h2>
-        <p class="section-subtitle" style="margin:1rem auto 0; text-align:center;">Открыт для сотрудничества и новых идей</p>
+        <h2 class="section-title" style="display:block; text-align:center;" data-i18n="contact.title">Контакты</h2>
+        <p class="section-subtitle" style="margin:1rem auto 0; text-align:center;" data-i18n="contact.subtitle">Открыт для сотрудничества и новых идей</p>
         <div class="contact-links">
           <a href="https://github.com/llapik" target="_blank" rel="noopener" class="contact-link interactive">
             <i class="fa-brands fa-github"></i> GitHub
@@ -154,13 +159,14 @@
 
     <!-- Footer -->
     <footer class="footer" role="contentinfo">
-      <p>&copy; 2026 llapik. Все права защищены.</p>
+      <p data-i18n="footer.copy">&copy; 2026 llapik. Все права защищены.</p>
     </footer>
   </div>
 
   <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- App -->
+  <script src="js/i18n.js"></script>
   <script src="js/fluid.js"></script>
   <script src="js/cursor.js"></script>
   <script src="js/app.js"></script>
