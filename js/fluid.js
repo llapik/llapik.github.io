@@ -1,6 +1,6 @@
 /* ============================================
    Fluid Background — Three.js Metaball Shader
-   Scroll-driven liquid simulation
+   Scroll-driven liquid simulation, theme-aware
    ============================================ */
 
 (function () {
@@ -9,7 +9,6 @@
   const canvas = document.getElementById('fluid-canvas');
   if (!canvas) return;
 
-  // Detect reduced motion preference
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent)
                    || window.innerWidth < 768;
@@ -28,21 +27,22 @@
     }
   `;
 
-  // Simplex-like fluid shader with metaball blobs, scroll-driven
   const fragmentShader = `
     precision mediump float;
 
     varying vec2 vUv;
 
     uniform float uTime;
-    uniform float uScrollProgress;   // 0..1 overall page scroll
-    uniform vec2  uMouse;            // normalised mouse coords
-    uniform float uMouseInfluence;   // how much mouse affects the field
-    uniform float uRipple;           // click ripple intensity
-    uniform float uRippleTime;       // time since last ripple
+    uniform float uScrollProgress;
+    uniform vec2  uMouse;
+    uniform float uMouseInfluence;
+    uniform float uRipple;
+    uniform float uRippleTime;
     uniform vec2  uResolution;
+    uniform float uIsDark;
+    uniform vec3  uAccentColor;
+    uniform vec3  uSecondaryColor;
 
-    // Simple 2D noise (hash-based)
     float hash(vec2 p) {
       return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
     }
@@ -70,7 +70,6 @@
       return val;
     }
 
-    // Metaball function
     float metaball(vec2 p, vec2 center, float radius) {
       float d = length(p - center);
       return radius * radius / (d * d + 0.001);
@@ -81,20 +80,14 @@
       float aspect = uResolution.x / uResolution.y;
       vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
 
-      // Scroll-driven parameters
-      // Hero (0-0.25): calm, slow
-      // About (0.25-0.5): structured
-      // Projects (0.5-0.75): chaotic
-      // Contact (0.75-1): fade out
       float scrollSpeed = 0.3 + uScrollProgress * 1.2;
       float turbulence = 0.5 + smoothstep(0.3, 0.6, uScrollProgress) * 1.5
                            - smoothstep(0.7, 1.0, uScrollProgress) * 1.0;
-      float orangeAmount = 0.3 + smoothstep(0.2, 0.5, uScrollProgress) * 0.5
-                             - smoothstep(0.75, 1.0, uScrollProgress) * 0.3;
+      float colorMix = 0.3 + smoothstep(0.2, 0.5, uScrollProgress) * 0.5
+                           - smoothstep(0.75, 1.0, uScrollProgress) * 0.3;
 
       float time = uTime * scrollSpeed * 0.15;
 
-      // Animated blob positions
       vec2 b1 = vec2(sin(time * 0.7) * 0.6, cos(time * 0.5) * 0.4);
       vec2 b2 = vec2(cos(time * 0.4) * 0.5, sin(time * 0.8) * 0.5);
       vec2 b3 = vec2(sin(time * 0.6 + 2.0) * 0.7, cos(time * 0.3 + 1.0) * 0.3);
@@ -103,7 +96,6 @@
 
       float blobSize = 0.12 + turbulence * 0.06;
 
-      // Metaball field
       float field = 0.0;
       field += metaball(p, b1, blobSize);
       field += metaball(p, b2, blobSize * 1.2);
@@ -111,13 +103,11 @@
       field += metaball(p, b4, blobSize * 0.9);
       field += metaball(p, b5, blobSize * 1.1);
 
-      // Mouse influence
       vec2 mouseP = (uMouse - 0.5) * vec2(aspect, 1.0);
       float mouseDist = length(p - mouseP);
       float mouseField = uMouseInfluence * 0.08 / (mouseDist * mouseDist + 0.01);
       field += mouseField;
 
-      // Ripple from click
       if (uRipple > 0.0) {
         float rippleWave = sin(mouseDist * 30.0 - uRippleTime * 8.0) * 0.5 + 0.5;
         float rippleFade = exp(-uRippleTime * 2.0) * uRipple;
@@ -125,25 +115,27 @@
         field += rippleWave * rippleFade * 0.3 + rippleRing * rippleFade * 0.5;
       }
 
-      // Noise distortion
       float n = fbm(p * 3.0 + time * 0.5) * turbulence;
       field += n * 0.4;
 
-      // Threshold
       float blob = smoothstep(0.8, 1.2, field);
 
-      // Color mixing: white → orange based on scroll + field intensity
-      vec3 colWhite = vec3(1.0, 1.0, 1.0);
-      vec3 colOrange = vec3(1.0, 0.4, 0.0);
-      vec3 blobColor = mix(colWhite, colOrange, orangeAmount * blob + n * 0.3);
+      // Multi-color gradient based on position and scroll
+      vec3 colBase = uIsDark > 0.5 ? vec3(1.0) : vec3(0.1);
+      vec3 colAccent = uAccentColor;
+      vec3 colSecondary = uSecondaryColor;
 
-      // Edge glow
+      // Blend accent colors across the field
+      float posMix = (p.x / aspect + 0.5) * 0.5 + uScrollProgress * 0.5;
+      vec3 gradientColor = mix(colAccent, colSecondary, sin(posMix * 3.14159) * 0.5 + 0.5);
+      vec3 blobColor = mix(colBase, gradientColor, colorMix * blob + n * 0.25);
+
       float edge = smoothstep(0.6, 0.8, field) - blob;
-      vec3 edgeColor = mix(colWhite, colOrange, orangeAmount) * 0.5;
+      vec3 edgeColor = mix(colBase, gradientColor, colorMix) * 0.5;
 
-      // Compose
       float fadeOut = 1.0 - smoothstep(0.85, 1.0, uScrollProgress) * 0.6;
-      float alpha = (blob * 0.15 + edge * 0.08) * fadeOut;
+      float alphaBase = uIsDark > 0.5 ? 0.15 : 0.12;
+      float alpha = (blob * alphaBase + edge * 0.08) * fadeOut;
 
       vec3 finalColor = blobColor * blob + edgeColor * edge;
 
@@ -166,6 +158,8 @@
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+
   const uniforms = {
     uTime:           { value: 0 },
     uScrollProgress: { value: 0 },
@@ -173,7 +167,10 @@
     uMouseInfluence: { value: 0 },
     uRipple:         { value: 0 },
     uRippleTime:     { value: 0 },
-    uResolution:     { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+    uResolution:     { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    uIsDark:         { value: isDark ? 1.0 : 0.0 },
+    uAccentColor:    { value: new THREE.Vector3(1.0, 0.4, 0.0) },      // orange
+    uSecondaryColor: { value: new THREE.Vector3(0.486, 0.227, 0.929) }  // purple
   };
 
   const material = new THREE.ShaderMaterial({
@@ -187,6 +184,12 @@
   const geometry = new THREE.PlaneGeometry(2, 2);
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
+
+  /* ---------- Theme change listener ---------- */
+  window.addEventListener('themechange', (e) => {
+    const dark = e.detail.theme === 'dark';
+    uniforms.uIsDark.value = dark ? 1.0 : 0.0;
+  });
 
   /* ---------- Interaction State ---------- */
   const state = {
@@ -236,13 +239,12 @@
   window.addEventListener('click', onClick);
   window.addEventListener('resize', onResize);
 
-  // Expose for cursor module
   window.fluidState = state;
   window.fluidUniforms = uniforms;
 
   /* ---------- Render Loop ---------- */
   let lastTime = 0;
-  const FPS_INTERVAL = isMobile ? 1000 / 30 : 0; // cap mobile to 30fps
+  const FPS_INTERVAL = isMobile ? 1000 / 30 : 0;
 
   function animate(time) {
     requestAnimationFrame(animate);
@@ -250,16 +252,14 @@
     if (isMobile && time - lastTime < FPS_INTERVAL) return;
     lastTime = time;
 
-    const dt = 0.016; // ~60fps step
+    const dt = 0.016;
 
-    // Smooth interpolation
     const lerpFactor = 0.05;
     state.scrollProgress += (state.targetScrollProgress - state.scrollProgress) * lerpFactor;
     state.mouseX += (state.targetMouseX - state.mouseX) * 0.08;
     state.mouseY += (state.targetMouseY - state.mouseY) * 0.08;
     state.mouseInfluence += (state.targetMouseInfluence - state.mouseInfluence) * 0.05;
 
-    // Ripple decay
     if (state.isRippling) {
       state.rippleTime += dt;
       state.ripple *= 0.97;
@@ -269,7 +269,6 @@
       }
     }
 
-    // Update uniforms
     uniforms.uTime.value = time * 0.001;
     uniforms.uScrollProgress.value = state.scrollProgress;
     uniforms.uMouse.value.set(state.mouseX, state.mouseY);
