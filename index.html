@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
   <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
   <meta name="author" content="Alexandr Stih">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#0a0a0a">
   <title>llapik — Портфолио разработчика | Александр Стих</title>
   <link rel="canonical" href="https://llapik.github.io/">
   <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
@@ -47,7 +47,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -58,8 +58,14 @@
 <body>
   <!-- Loading Screen -->
   <div class="loader" id="loader">
-    <span class="loader-text">llapik</span>
+    <div class="loader-inner">
+      <span class="loader-text">llapik</span>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
   </div>
+
+  <!-- Noise Grain Overlay -->
+  <div class="noise-overlay" aria-hidden="true"></div>
 
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
@@ -79,19 +85,27 @@
         <li><a href="#projects" data-i18n="nav.projects">Проекты</a></li>
         <li><a href="#contact" data-i18n="nav.contact">Контакты</a></li>
       </ul>
-      <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
-      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+      <div class="nav-controls">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon" id="theme-icon"></i>
+        </button>
+        <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </nav>
 
     <!-- Hero -->
     <section class="hero" id="hero">
       <div class="hero-content">
         <p class="hero-greeting" data-i18n="hero.greeting">Привет, я</p>
-        <h1 class="hero-name">Alexandr <span class="accent">Stih</span></h1>
+        <h1 class="hero-name">
+          <span class="hero-name-line">Alexandr</span>
+          <span class="hero-name-line accent-gradient">Stih</span>
+        </h1>
         <p class="hero-tagline" data-i18n="hero.tagline">Создаю цифровые продукты на стыке дизайна, кода и безответственности</p>
         <a href="#projects" class="hero-cta interactive" data-i18n="hero.cta">Смотреть проекты <span>&rarr;</span></a>
       </div>
@@ -100,6 +114,9 @@
         <div class="scroll-line"></div>
       </div>
     </section>
+
+    <!-- Section Divider -->
+    <div class="section-divider divider-gradient"></div>
 
     <!-- About -->
     <section class="about" id="about">
@@ -122,6 +139,9 @@
       </div>
     </section>
 
+    <!-- Section Divider -->
+    <div class="section-divider divider-diagonal"></div>
+
     <!-- Projects -->
     <section class="projects" id="projects">
       <div class="projects-wrapper">
@@ -138,11 +158,14 @@
       </div>
     </section>
 
+    <!-- Section Divider -->
+    <div class="section-divider divider-glow"></div>
+
     <!-- Contact -->
     <section class="contact" id="contact">
       <div class="contact-wrapper">
-        <h2 class="section-title" style="display:block; text-align:center;" data-i18n="contact.title">Контакты</h2>
-        <p class="section-subtitle" style="margin:1rem auto 0; text-align:center;" data-i18n="contact.subtitle">Открыт для сотрудничества и новых идей</p>
+        <h2 class="section-title" data-i18n="contact.title">Контакты</h2>
+        <p class="section-subtitle" data-i18n="contact.subtitle">Открыт для сотрудничества и новых идей</p>
         <div class="contact-links">
           <a href="https://github.com/llapik" target="_blank" rel="noopener" class="contact-link interactive">
             <i class="fa-brands fa-github"></i> GitHub
