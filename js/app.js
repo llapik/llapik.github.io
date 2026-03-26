@@ -1,85 +1,92 @@
 /* ============================================
    Main App — Portfolio llapik
-   Scroll animations, JSON loading, filters, theme
+   Underwater theme, list projects, depth system
    ============================================ */
-
 (function () {
   'use strict';
 
-  /* ---------- Theme Toggle ---------- */
+  /* ---------- Theme ---------- */
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
 
   function detectTheme() {
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved;
+    const s = localStorage.getItem('theme');
+    if (s) return s;
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    // Update icon
-    if (themeIcon) {
-      themeIcon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-    }
-    // Update theme-color meta
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    if (themeIcon) themeIcon.className = t === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute('content', theme === 'dark' ? '#0a0a0a' : '#fafafa');
-    }
-    // Notify fluid shader
-    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: theme } }));
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#020b18' : '#eef6fc');
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: t } }));
   }
-
   let currentTheme = detectTheme();
   applyTheme(currentTheme);
+  if (themeToggle) themeToggle.addEventListener('click', () => { currentTheme = currentTheme === 'dark' ? 'light' : 'dark'; applyTheme(currentTheme); });
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(currentTheme);
-    });
+  /* ---------- Bubbles ---------- */
+  const bubblesContainer = document.getElementById('bubbles');
+  if (bubblesContainer) {
+    const BUBBLE_COUNT = 15;
+    for (let i = 0; i < BUBBLE_COUNT; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      const size = 4 + Math.random() * 16;
+      b.style.width = size + 'px';
+      b.style.height = size + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.animationDuration = (8 + Math.random() * 12) + 's';
+      b.style.animationDelay = (Math.random() * 10) + 's';
+      bubblesContainer.appendChild(b);
+    }
   }
+
+  /* ---------- Depth Indicator ---------- */
+  const depthEl = document.querySelector('.depth-value');
+  function updateDepth() {
+    if (!depthEl) return;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = h > 0 ? window.scrollY / h : 0;
+    const depth = Math.round(progress * 500);
+    depthEl.textContent = depth + 'm';
+  }
+  window.addEventListener('scroll', updateDepth, { passive: true });
 
   /* ---------- Loader ---------- */
   window.addEventListener('load', () => {
     const loader = document.getElementById('loader');
-    if (loader) {
-      setTimeout(() => loader.classList.add('loaded'), 800);
-    }
+    if (loader) setTimeout(() => loader.classList.add('loaded'), 800);
     animateHero();
   });
 
-  /* ---------- Hero Entrance ---------- */
+  /* ---------- Hero ---------- */
   function animateHero() {
-    const elements = [
+    [
       { el: document.querySelector('.hero-greeting'), delay: 400 },
       { el: document.querySelector('.hero-name'),     delay: 600 },
       { el: document.querySelector('.hero-tagline'),  delay: 900 },
       { el: document.querySelector('.hero-cta'),      delay: 1100 }
-    ];
-
-    elements.forEach(({ el, delay }) => {
+    ].forEach(({ el, delay }) => {
       if (!el) return;
       setTimeout(() => {
-        el.style.transition = 'opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo)';
+        el.style.transition = 'opacity 1s var(--expo), transform 1s var(--expo)';
         el.style.opacity = '1';
         el.style.transform = 'translateY(0)';
       }, delay);
     });
   }
 
-  /* ---------- Hero Parallax on Scroll ---------- */
+  /* ---------- Hero Parallax ---------- */
   const heroContent = document.querySelector('.hero-content');
   window.addEventListener('scroll', () => {
     if (!heroContent) return;
-    const scroll = window.scrollY;
-    const heroHeight = window.innerHeight;
-    if (scroll < heroHeight) {
-      const progress = scroll / heroHeight;
-      heroContent.style.opacity = 1 - progress * 1.2;
-      heroContent.style.transform = `translateY(${scroll * 0.35}px) scale(${1 - progress * 0.05})`;
+    const s = window.scrollY, h = window.innerHeight;
+    if (s < h) {
+      const p = s / h;
+      heroContent.style.opacity = 1 - p * 1.3;
+      heroContent.style.transform = 'translateY(' + (s * 0.35) + 'px) scale(' + (1 - p * 0.05) + ')';
     }
   }, { passive: true });
 
@@ -88,193 +95,127 @@
   const navToggle = document.getElementById('nav-toggle');
   const navLinks = document.getElementById('nav-links');
 
-  // Scroll shrink
-  window.addEventListener('scroll', () => {
-    if (nav) {
-      nav.classList.toggle('scrolled', window.scrollY > 80);
-    }
-  }, { passive: true });
+  window.addEventListener('scroll', () => { if (nav) nav.classList.toggle('scrolled', window.scrollY > 80); }, { passive: true });
 
-  // Mobile toggle
   if (navToggle && navLinks) {
-    navToggle.addEventListener('click', () => {
-      navToggle.classList.toggle('active');
-      navLinks.classList.toggle('open');
-    });
-
-    // Close on link click
+    navToggle.addEventListener('click', () => { navToggle.classList.toggle('active'); navLinks.classList.toggle('open'); });
     navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        navToggle.classList.remove('active');
-        navLinks.classList.remove('open');
-      });
+      link.addEventListener('click', () => { navToggle.classList.remove('active'); navLinks.classList.remove('open'); });
     });
   }
 
-  // Active link tracking
   const sections = document.querySelectorAll('section[id]');
   const navAnchors = document.querySelectorAll('.nav-links a');
-
   function updateActiveNav() {
-    const scroll = window.scrollY + window.innerHeight * 0.3;
-    let currentId = '';
-    sections.forEach(sec => {
-      if (sec.offsetTop <= scroll) {
-        currentId = sec.id;
-      }
-    });
-    navAnchors.forEach(a => {
-      a.classList.toggle('active', a.getAttribute('href') === '#' + currentId);
-    });
+    const s = window.scrollY + window.innerHeight * 0.3;
+    let id = '';
+    sections.forEach(sec => { if (sec.offsetTop <= s) id = sec.id; });
+    navAnchors.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
   }
-
   window.addEventListener('scroll', updateActiveNav, { passive: true });
 
-  /* ---------- About — Word Reveal ---------- */
+  /* ---------- Word Reveal ---------- */
   const aboutText = document.getElementById('about-text');
+  const obsOpts = { root: null, threshold: 0.15, rootMargin: '0px' };
 
-  /* ---------- Intersection Observer — Reveal ---------- */
-  const observerOptions = {
-    root: null,
-    threshold: 0.15,
-    rootMargin: '0px'
-  };
-
-  // Word reveal observer
-  const wordObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const words = entry.target.querySelectorAll('.reveal-word');
-        words.forEach(w => w.classList.add('visible'));
-        wordObserver.unobserve(entry.target);
+  const wordObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.reveal-word').forEach(w => w.classList.add('visible'));
+        wordObs.unobserve(e.target);
       }
     });
-  }, observerOptions);
+  }, obsOpts);
 
   function initWordReveal() {
     if (!aboutText) return;
-    const text = aboutText.textContent.trim();
+    const txt = aboutText.textContent.trim();
     aboutText.innerHTML = '';
-    const words = text.split(/\s+/);
-    words.forEach((word, i) => {
+    txt.split(/\s+/).forEach((word, i, arr) => {
       const span = document.createElement('span');
       span.className = 'reveal-word';
       span.textContent = word;
       span.style.transitionDelay = (i * 0.03) + 's';
       aboutText.appendChild(span);
-      if (i < words.length - 1) {
-        aboutText.appendChild(document.createTextNode(' '));
-      }
+      if (i < arr.length - 1) aboutText.appendChild(document.createTextNode(' '));
     });
-    wordObserver.observe(aboutText);
+    wordObs.observe(aboutText);
   }
-
   initWordReveal();
+  if (aboutText) aboutText.addEventListener('i18n:updated', initWordReveal);
 
-  // Re-init on language change
-  if (aboutText) {
-    aboutText.addEventListener('i18n:updated', initWordReveal);
-  }
+  /* ---------- Card / Item Reveal ---------- */
+  const itemObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); itemObs.unobserve(e.target); } });
+  }, { root: null, threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-  // Card reveal observer
-  const cardObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        cardObserver.unobserve(entry.target);
-      }
-    });
-  }, { root: null, threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-  // Section title observer
-  const titleObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
-        titleObserver.unobserve(entry.target);
-      }
-    });
-  }, observerOptions);
+  /* ---------- Title Reveal ---------- */
+  const titleObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; titleObs.unobserve(e.target); } });
+  }, obsOpts);
 
   document.querySelectorAll('.section-title, .section-subtitle').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(24px)';
-    el.style.transition = 'opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo)';
-    titleObserver.observe(el);
+    el.style.transition = 'opacity 0.8s var(--expo), transform 0.8s var(--expo)';
+    titleObs.observe(el);
   });
 
-  // Skill tags stagger observer
-  const skillObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const tags = entry.target.querySelectorAll('.skill-tag');
-        tags.forEach((tag, i) => {
+  /* ---------- Skill Tags Stagger ---------- */
+  const skillObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.skill-tag').forEach((tag, i) => {
           tag.style.transitionDelay = (i * 0.06) + 's';
-          tag.style.opacity = '1';
-          tag.style.transform = 'translateY(0)';
+          tag.style.opacity = '1'; tag.style.transform = 'translateY(0)';
         });
-        skillObserver.unobserve(entry.target);
+        skillObs.unobserve(e.target);
       }
     });
-  }, observerOptions);
+  }, obsOpts);
 
   const skillsGrid = document.querySelector('.skills-grid');
   if (skillsGrid) {
     skillsGrid.querySelectorAll('.skill-tag').forEach(tag => {
-      tag.style.opacity = '0';
-      tag.style.transform = 'translateY(16px)';
-      tag.style.transition = 'opacity 0.6s ease, transform 0.6s var(--ease-out-expo), border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease';
+      tag.style.opacity = '0'; tag.style.transform = 'translateY(16px)';
+      tag.style.transition = 'opacity 0.6s ease, transform 0.6s var(--expo), border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease';
     });
-    skillObserver.observe(skillsGrid);
+    skillObs.observe(skillsGrid);
   }
 
-  // Contact pulse on visible
-  const contactObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const links = entry.target.querySelectorAll('.contact-link');
-      if (entry.isIntersecting) {
-        links.forEach((link, i) => {
-          setTimeout(() => {
-            link.style.opacity = '1';
-            link.style.transform = 'translateY(0)';
-            link.classList.add('pulse');
-          }, i * 200);
+  /* ---------- Contact Reveal ---------- */
+  const contactObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.contact-link').forEach((link, i) => {
+          setTimeout(() => { link.style.opacity = '1'; link.style.transform = 'translateY(0)'; link.classList.add('pulse'); }, i * 200);
         });
-        contactObserver.unobserve(entry.target);
+        contactObs.unobserve(e.target);
       }
     });
-  }, observerOptions);
+  }, obsOpts);
 
   const contactSection = document.getElementById('contact');
   if (contactSection) {
     contactSection.querySelectorAll('.contact-link').forEach(link => {
-      link.style.opacity = '0';
-      link.style.transform = 'translateY(20px)';
-      link.style.transition = 'opacity 0.6s ease, transform 0.6s var(--ease-out-expo), border-color 0.4s ease, box-shadow 0.4s ease';
+      link.style.opacity = '0'; link.style.transform = 'translateY(20px)';
+      link.style.transition = 'opacity 0.6s ease, transform 0.6s var(--expo), border-color 0.4s ease, box-shadow 0.4s ease';
     });
-    contactObserver.observe(contactSection);
+    contactObs.observe(contactSection);
   }
 
-  // Divider observer
-  const dividerObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'scaleX(1)';
-        dividerObserver.unobserve(entry.target);
-      }
-    });
-  }, { root: null, threshold: 0.3 });
+  /* ---------- Wave Divider Animation ---------- */
+  const waveObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; waveObs.unobserve(e.target); } });
+  }, { root: null, threshold: 0.2 });
 
-  document.querySelectorAll('.section-divider').forEach(div => {
-    div.style.opacity = '0';
-    div.style.transform = 'scaleX(0.3)';
-    div.style.transition = 'opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo)';
-    dividerObserver.observe(div);
+  document.querySelectorAll('.wave-divider').forEach(w => {
+    w.style.opacity = '0'; w.style.transform = 'translateY(20px)';
+    w.style.transition = 'opacity 1s var(--expo), transform 1s var(--expo)';
+    waveObs.observe(w);
   });
 
-  /* ---------- Load Projects from JSON ---------- */
+  /* ---------- Projects ---------- */
   const projectsGrid = document.getElementById('projects-grid');
   const filterBar = document.getElementById('filter-bar');
   let allProjects = [];
@@ -282,15 +223,10 @@
 
   async function loadProjects() {
     try {
-      const response = await fetch('data/projects.json');
-      if (!response.ok) throw new Error('Failed to load projects');
-      allProjects = await response.json();
-
-      // Collect all technologies for filter
-      allProjects.forEach(p => {
-        (p.technologies || []).forEach(t => allTechs.add(t));
-      });
-
+      const res = await fetch('data/projects.json');
+      if (!res.ok) throw new Error('Failed');
+      allProjects = await res.json();
+      allProjects.forEach(p => (p.technologies || []).forEach(t => allTechs.add(t)));
       buildFilterButtons();
       renderProjects(allProjects);
     } catch (err) {
@@ -314,26 +250,15 @@
     });
   }
 
-  function filterProjects(tech, activeBtn) {
+  function filterProjects(tech, btn) {
     filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    activeBtn.classList.add('active');
-
-    if (tech === 'all') {
-      renderProjects(allProjects);
-    } else {
-      const filtered = allProjects.filter(p =>
-        (p.technologies || []).includes(tech)
-      );
-      renderProjects(filtered);
-    }
+    btn.classList.add('active');
+    renderProjects(tech === 'all' ? allProjects : allProjects.filter(p => (p.technologies || []).includes(tech)));
   }
 
-  // Bind "All" button
   if (filterBar) {
     const allBtn = filterBar.querySelector('[data-filter="all"]');
-    if (allBtn) {
-      allBtn.addEventListener('click', () => filterProjects('all', allBtn));
-    }
+    if (allBtn) allBtn.addEventListener('click', () => filterProjects('all', allBtn));
   }
 
   function renderProjects(projects) {
@@ -341,67 +266,54 @@
     projectsGrid.innerHTML = '';
 
     projects.forEach((project, index) => {
-      const card = document.createElement('div');
-      card.className = 'project-card interactive';
-      card.style.transitionDelay = (index * 0.12) + 's';
+      const item = document.createElement('div');
+      item.className = 'project-item interactive';
+      item.style.transitionDelay = (index * 0.1) + 's';
 
-      const linkIcon = project.type === 'gdrive'
-        ? '<i class="fa-brands fa-google-drive"></i>'
-        : '<i class="fa-brands fa-github"></i>';
-
-      const linkLabel = project.type === 'gdrive' ? 'Google Drive' : 'GitHub';
-
-      const projectPrefix = window.i18n ? window.i18n.t('projects.prefix') : 'Проект';
+      const linkIcon = project.type === 'gdrive' ? '<i class="fa-brands fa-google-drive"></i>' : '<i class="fa-brands fa-github"></i>';
+      const linkLabel = project.type === 'gdrive' ? 'Drive' : 'GitHub';
       const lang = window.i18n ? window.i18n.lang() : 'ru';
       const desc = (lang === 'en' && project.description_en) ? project.description_en : project.description;
-      card.innerHTML = `
-        <div class="project-card-number">${escapeHtml(projectPrefix)} ${String(index + 1).padStart(2, '0')}</div>
-        <h3 class="project-card-title">${escapeHtml(project.title)}</h3>
-        <p class="project-card-desc">${escapeHtml(desc)}</p>
-        <div class="project-card-tech">
-          ${(project.technologies || []).map(t =>
-            `<span class="tech-badge">${escapeHtml(t)}</span>`
-          ).join('')}
-        </div>
-        <a href="${escapeHtml(project.link)}" target="_blank" rel="noopener" class="project-card-link interactive">
-          ${linkIcon} ${linkLabel} <span class="arrow">&rarr;</span>
-        </a>
-      `;
 
-      projectsGrid.appendChild(card);
-      cardObserver.observe(card);
+      item.innerHTML =
+        '<div class="project-item-number">' + String(index + 1).padStart(2, '0') + '</div>' +
+        '<div class="project-item-content">' +
+          '<h3 class="project-item-title">' + escapeHtml(project.title) + '</h3>' +
+          '<p class="project-item-desc">' + escapeHtml(desc) + '</p>' +
+          '<div class="project-item-tech">' +
+            (project.technologies || []).map(t => '<span class="tech-badge">' + escapeHtml(t) + '</span>').join('') +
+          '</div>' +
+        '</div>' +
+        '<a href="' + escapeHtml(project.link) + '" target="_blank" rel="noopener" class="project-item-link interactive">' +
+          linkIcon + ' ' + linkLabel + ' <span class="arrow">&rarr;</span>' +
+        '</a>';
+
+      projectsGrid.appendChild(item);
+      itemObs.observe(item);
     });
   }
 
   function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
   }
 
   loadProjects();
 
-  // Re-render projects on language change
   window.addEventListener('langchange', () => {
     if (allProjects.length > 0) {
-      const activeFilter = filterBar ? filterBar.querySelector('.filter-btn.active') : null;
-      const tech = activeFilter ? activeFilter.dataset.filter : 'all';
-      if (tech === 'all') {
-        renderProjects(allProjects);
-      } else {
-        renderProjects(allProjects.filter(p => (p.technologies || []).includes(tech)));
-      }
+      const active = filterBar ? filterBar.querySelector('.filter-btn.active') : null;
+      const tech = active ? active.dataset.filter : 'all';
+      renderProjects(tech === 'all' ? allProjects : allProjects.filter(p => (p.technologies || []).includes(tech)));
     }
   });
 
-  /* ---------- Smooth Scroll for anchor links ---------- */
+  /* ---------- Smooth Scroll ---------- */
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', (e) => {
       const target = document.querySelector(anchor.getAttribute('href'));
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
-      }
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
     });
   });
 

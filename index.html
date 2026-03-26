@@ -6,7 +6,7 @@
   <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
   <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
   <meta name="author" content="Alexandr Stih">
-  <meta name="theme-color" content="#0a0a0a">
+  <meta name="theme-color" content="#020b18">
   <title>llapik — Портфолио разработчика | Александр Стих</title>
   <link rel="canonical" href="https://llapik.github.io/">
   <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
@@ -35,10 +35,7 @@
     "name": "Alexandr Stih",
     "alternateName": "llapik",
     "url": "https://llapik.github.io",
-    "sameAs": [
-      "https://github.com/llapik",
-      "https://t.me/eayyyyyy"
-    ],
+    "sameAs": ["https://github.com/llapik", "https://t.me/eayyyyyy"],
     "jobTitle": "Developer & Designer",
     "knowsAbout": ["JavaScript", "Python", "C++", "C#", "Node.js", "WebGL", "UI/UX", "CSS/SCSS"]
   }
@@ -61,11 +58,12 @@
     <div class="loader-inner">
       <span class="loader-text">llapik</span>
       <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+      <span class="loader-depth" data-i18n="loader.depth">Погружение...</span>
     </div>
   </div>
 
-  <!-- Noise Grain Overlay -->
-  <div class="noise-overlay" aria-hidden="true"></div>
+  <!-- Bubbles Overlay -->
+  <div class="bubbles" id="bubbles" aria-hidden="true"></div>
 
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
@@ -73,6 +71,11 @@
 
   <!-- Fluid Background Canvas -->
   <canvas id="fluid-canvas"></canvas>
+
+  <!-- Depth Indicator -->
+  <div class="depth-indicator" id="depth-indicator" aria-hidden="true">
+    <span class="depth-value">0m</span>
+  </div>
 
   <!-- Content -->
   <div class="content">
@@ -91,15 +94,13 @@
         </button>
         <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
         <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span>
         </button>
       </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="hero" id="hero">
+    <!-- Hero (Surface) -->
+    <section class="hero section-depth" id="hero" data-depth="0">
       <div class="hero-content">
         <p class="hero-greeting" data-i18n="hero.greeting">Привет, я</p>
         <h1 class="hero-name">
@@ -110,16 +111,20 @@
         <a href="#projects" class="hero-cta interactive" data-i18n="hero.cta">Смотреть проекты <span>&rarr;</span></a>
       </div>
       <div class="hero-scroll-hint">
-        <span>Scroll</span>
+        <span data-i18n="hero.dive">Погрузиться</span>
         <div class="scroll-line"></div>
       </div>
     </section>
 
-    <!-- Section Divider -->
-    <div class="section-divider divider-gradient"></div>
+    <!-- Wave Divider 1 -->
+    <div class="wave-divider wave-1">
+      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="M0,60 C240,120 480,0 720,60 C960,120 1200,0 1440,60 L1440,120 L0,120 Z" fill="var(--wave-fill-1)"/>
+      </svg>
+    </div>
 
-    <!-- About -->
-    <section class="about" id="about">
+    <!-- About (Shallow) -->
+    <section class="about section-depth" id="about" data-depth="50">
       <div class="about-wrapper">
         <h2 class="section-title" data-i18n="about.title">О себе</h2>
         <p class="section-subtitle" data-i18n="about.subtitle">Developer & Creative Thinker</p>
@@ -139,11 +144,15 @@
       </div>
     </section>
 
-    <!-- Section Divider -->
-    <div class="section-divider divider-diagonal"></div>
+    <!-- Wave Divider 2 -->
+    <div class="wave-divider wave-2">
+      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="M0,80 C360,20 720,100 1080,40 C1260,10 1380,80 1440,60 L1440,120 L0,120 Z" fill="var(--wave-fill-2)"/>
+      </svg>
+    </div>
 
-    <!-- Projects -->
-    <section class="projects" id="projects">
+    <!-- Projects (Mid-depth) -->
+    <section class="projects section-depth" id="projects" data-depth="200">
       <div class="projects-wrapper">
         <div class="projects-header">
           <h2 class="section-title" data-i18n="projects.title">Проекты</h2>
@@ -152,17 +161,21 @@
             <button class="filter-btn active interactive" data-filter="all" data-i18n="projects.all">Все</button>
           </div>
         </div>
-        <div class="projects-grid" id="projects-grid">
-          <!-- Cards rendered by JS -->
+        <div class="projects-list" id="projects-grid">
+          <!-- Rendered by JS as list items -->
         </div>
       </div>
     </section>
 
-    <!-- Section Divider -->
-    <div class="section-divider divider-glow"></div>
+    <!-- Wave Divider 3 -->
+    <div class="wave-divider wave-3">
+      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="M0,40 C180,100 360,20 540,80 C720,140 900,0 1080,60 C1260,120 1380,20 1440,50 L1440,120 L0,120 Z" fill="var(--wave-fill-3)"/>
+      </svg>
+    </div>
 
-    <!-- Contact -->
-    <section class="contact" id="contact">
+    <!-- Contact (Deep) -->
+    <section class="contact section-depth" id="contact" data-depth="500">
       <div class="contact-wrapper">
         <h2 class="section-title" data-i18n="contact.title">Контакты</h2>
         <p class="section-subtitle" data-i18n="contact.subtitle">Открыт для сотрудничества и новых идей</p>
@@ -188,7 +201,6 @@
 
   <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- App -->
   <script src="js/i18n.js"></script>
   <script src="js/fluid.js"></script>
   <script src="js/cursor.js"></script>
