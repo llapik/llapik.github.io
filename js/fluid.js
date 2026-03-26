@@ -1,8 +1,7 @@
 /* ============================================
-   Fluid Background — Three.js Metaball Shader
-   Scroll-driven liquid simulation, theme-aware
+   Underwater Caustics — Three.js Shader
+   Deep ocean light simulation
    ============================================ */
-
 (function () {
   'use strict';
 
@@ -10,15 +9,10 @@
   if (!canvas) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent)
-                   || window.innerWidth < 768;
+  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-  if (prefersReducedMotion) {
-    canvas.style.display = 'none';
-    return;
-  }
+  if (prefersReducedMotion) { canvas.style.display = 'none'; return; }
 
-  /* ---------- Shader Sources ---------- */
   const vertexShader = `
     varying vec2 vUv;
     void main() {
@@ -29,255 +23,171 @@
 
   const fragmentShader = `
     precision mediump float;
-
     varying vec2 vUv;
 
     uniform float uTime;
-    uniform float uScrollProgress;
+    uniform float uScroll;
     uniform vec2  uMouse;
-    uniform float uMouseInfluence;
+    uniform float uMouseInf;
     uniform float uRipple;
-    uniform float uRippleTime;
-    uniform vec2  uResolution;
-    uniform float uIsDark;
-    uniform vec3  uAccentColor;
-    uniform vec3  uSecondaryColor;
+    uniform float uRippleT;
+    uniform vec2  uRes;
+    uniform float uDark;
 
-    float hash(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-    }
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
 
     float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      f = f * f * (3.0 - 2.0 * f);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      vec2 i = floor(p), f = fract(p);
+      f = f*f*(3.0-2.0*f);
+      return mix(mix(hash(i), hash(i+vec2(1,0)), f.x),
+                 mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
     }
 
     float fbm(vec2 p) {
-      float val = 0.0;
-      float amp = 0.5;
-      float freq = 1.0;
-      for (int i = 0; i < 5; i++) {
-        val += amp * noise(p * freq);
-        freq *= 2.0;
-        amp *= 0.5;
-      }
-      return val;
+      float v = 0.0, a = 0.5;
+      mat2 rot = mat2(0.8,-0.6,0.6,0.8);
+      for(int i = 0; i < 5; i++) { v += a*noise(p); p = rot*p*2.0; a *= 0.5; }
+      return v;
     }
 
-    float metaball(vec2 p, vec2 center, float radius) {
-      float d = length(p - center);
-      return radius * radius / (d * d + 0.001);
+    // Caustic light pattern
+    float caustic(vec2 p, float t) {
+      float c = 0.0;
+      // Layer 1
+      c += 0.5 * fbm(p * 3.0 + t * 0.4);
+      // Layer 2 — sharper, faster
+      c += 0.3 * pow(fbm(p * 5.0 - t * 0.6 + 3.14), 2.0);
+      // Layer 3 — subtle detail
+      c += 0.2 * fbm(p * 8.0 + t * 0.3 + 1.57);
+      return c;
     }
 
     void main() {
       vec2 uv = vUv;
-      float aspect = uResolution.x / uResolution.y;
+      float aspect = uRes.x / uRes.y;
       vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
 
-      float scrollSpeed = 0.3 + uScrollProgress * 1.2;
-      float turbulence = 0.5 + smoothstep(0.3, 0.6, uScrollProgress) * 1.5
-                           - smoothstep(0.7, 1.0, uScrollProgress) * 1.0;
-      float colorMix = 0.3 + smoothstep(0.2, 0.5, uScrollProgress) * 0.5
-                           - smoothstep(0.75, 1.0, uScrollProgress) * 0.3;
+      float t = uTime * 0.12;
 
-      float time = uTime * scrollSpeed * 0.15;
+      // Depth affects intensity — deeper = dimmer but more colorful
+      float depth = smoothstep(0.0, 0.8, uScroll);
+      float intensity = 1.0 - depth * 0.5;
 
-      vec2 b1 = vec2(sin(time * 0.7) * 0.6, cos(time * 0.5) * 0.4);
-      vec2 b2 = vec2(cos(time * 0.4) * 0.5, sin(time * 0.8) * 0.5);
-      vec2 b3 = vec2(sin(time * 0.6 + 2.0) * 0.7, cos(time * 0.3 + 1.0) * 0.3);
-      vec2 b4 = vec2(cos(time * 0.9 + 3.0) * 0.4, sin(time * 0.6 + 2.0) * 0.6);
-      vec2 b5 = vec2(sin(time * 0.3 + 4.0) * 0.5, cos(time * 0.7 + 3.0) * 0.4);
+      // Generate caustic pattern
+      float c = caustic(p, t);
 
-      float blobSize = 0.12 + turbulence * 0.06;
-
-      float field = 0.0;
-      field += metaball(p, b1, blobSize);
-      field += metaball(p, b2, blobSize * 1.2);
-      field += metaball(p, b3, blobSize * 0.8);
-      field += metaball(p, b4, blobSize * 0.9);
-      field += metaball(p, b5, blobSize * 1.1);
-
+      // Mouse light beam
       vec2 mouseP = (uMouse - 0.5) * vec2(aspect, 1.0);
-      float mouseDist = length(p - mouseP);
-      float mouseField = uMouseInfluence * 0.08 / (mouseDist * mouseDist + 0.01);
-      field += mouseField;
+      float mDist = length(p - mouseP);
+      float mouseLight = uMouseInf * 0.15 / (mDist * mDist + 0.05);
+      c += mouseLight;
 
+      // Ripple
       if (uRipple > 0.0) {
-        float rippleWave = sin(mouseDist * 30.0 - uRippleTime * 8.0) * 0.5 + 0.5;
-        float rippleFade = exp(-uRippleTime * 2.0) * uRipple;
-        float rippleRing = smoothstep(0.02, 0.0, abs(mouseDist - uRippleTime * 0.5));
-        field += rippleWave * rippleFade * 0.3 + rippleRing * rippleFade * 0.5;
+        float wave = sin(mDist * 25.0 - uRippleT * 10.0) * 0.5 + 0.5;
+        float fade = exp(-uRippleT * 2.5) * uRipple;
+        c += wave * fade * 0.4;
       }
 
-      float n = fbm(p * 3.0 + time * 0.5) * turbulence;
-      field += n * 0.4;
+      // Color: cyan → teal → purple shift with depth
+      vec3 colCyan   = vec3(0.0, 0.83, 1.0);
+      vec3 colTeal   = vec3(0.05, 0.94, 0.75);
+      vec3 colPurple = vec3(0.48, 0.41, 0.93);
 
-      float blob = smoothstep(0.8, 1.2, field);
+      float colorShift = sin(p.x * 2.0 + t) * 0.5 + 0.5;
+      vec3 shallowColor = mix(colCyan, colTeal, colorShift);
+      vec3 deepColor = mix(colPurple, colCyan, colorShift * 0.5);
+      vec3 waterColor = mix(shallowColor, deepColor, depth);
 
-      // Multi-color gradient based on position and scroll
-      vec3 colBase = uIsDark > 0.5 ? vec3(1.0) : vec3(0.1);
-      vec3 colAccent = uAccentColor;
-      vec3 colSecondary = uSecondaryColor;
+      // Light theme: darker caustics on light bg
+      if (uDark < 0.5) {
+        waterColor *= 0.6;
+      }
 
-      // Blend accent colors across the field
-      float posMix = (p.x / aspect + 0.5) * 0.5 + uScrollProgress * 0.5;
-      vec3 gradientColor = mix(colAccent, colSecondary, sin(posMix * 3.14159) * 0.5 + 0.5);
-      vec3 blobColor = mix(colBase, gradientColor, colorMix * blob + n * 0.25);
+      // Final alpha — caustic brightness
+      float pattern = smoothstep(0.35, 0.7, c);
+      float glow = smoothstep(0.5, 0.9, c) * 0.5;
+      float alphaBase = uDark > 0.5 ? 0.18 : 0.1;
+      float alpha = (pattern * alphaBase + glow * 0.06) * intensity;
 
-      float edge = smoothstep(0.6, 0.8, field) - blob;
-      vec3 edgeColor = mix(colBase, gradientColor, colorMix) * 0.5;
-
-      float fadeOut = 1.0 - smoothstep(0.85, 1.0, uScrollProgress) * 0.6;
-      float alphaBase = uIsDark > 0.5 ? 0.15 : 0.12;
-      float alpha = (blob * alphaBase + edge * 0.08) * fadeOut;
-
-      vec3 finalColor = blobColor * blob + edgeColor * edge;
+      vec3 finalColor = waterColor * (pattern + glow * 0.3);
 
       gl_FragColor = vec4(finalColor, alpha);
     }
   `;
 
-  /* ---------- Three.js Setup ---------- */
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true,
-    antialias: false,
-    powerPreference: isMobile ? 'low-power' : 'high-performance'
-  });
-
-  const pixelRatio = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
-  renderer.setPixelRatio(pixelRatio);
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: isMobile ? 'low-power' : 'high-performance' });
+  renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
   const uniforms = {
-    uTime:           { value: 0 },
-    uScrollProgress: { value: 0 },
-    uMouse:          { value: new THREE.Vector2(0.5, 0.5) },
-    uMouseInfluence: { value: 0 },
-    uRipple:         { value: 0 },
-    uRippleTime:     { value: 0 },
-    uResolution:     { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    uIsDark:         { value: isDark ? 1.0 : 0.0 },
-    uAccentColor:    { value: new THREE.Vector3(1.0, 0.4, 0.0) },      // orange
-    uSecondaryColor: { value: new THREE.Vector3(0.486, 0.227, 0.929) }  // purple
+    uTime:     { value: 0 },
+    uScroll:   { value: 0 },
+    uMouse:    { value: new THREE.Vector2(0.5, 0.5) },
+    uMouseInf: { value: 0 },
+    uRipple:   { value: 0 },
+    uRippleT:  { value: 0 },
+    uRes:      { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    uDark:     { value: isDark ? 1.0 : 0.0 }
   };
 
-  const material = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    uniforms,
-    transparent: true,
-    depthWrite: false
-  });
+  scene.add(new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms, transparent: true, depthWrite: false })
+  ));
 
-  const geometry = new THREE.PlaneGeometry(2, 2);
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+  window.addEventListener('themechange', (e) => { uniforms.uDark.value = e.detail.theme === 'dark' ? 1.0 : 0.0; });
 
-  /* ---------- Theme change listener ---------- */
-  window.addEventListener('themechange', (e) => {
-    const dark = e.detail.theme === 'dark';
-    uniforms.uIsDark.value = dark ? 1.0 : 0.0;
-  });
+  const st = { scroll: 0, tScroll: 0, mx: 0.5, my: 0.5, tmx: 0.5, tmy: 0.5, mi: 0, tmi: 0, ripple: 0, rippleT: 0, ripping: false };
 
-  /* ---------- Interaction State ---------- */
-  const state = {
-    scrollProgress: 0,
-    targetScrollProgress: 0,
-    mouseX: 0.5,
-    mouseY: 0.5,
-    targetMouseX: 0.5,
-    targetMouseY: 0.5,
-    mouseInfluence: 0,
-    targetMouseInfluence: 0,
-    ripple: 0,
-    rippleTime: 0,
-    isRippling: false
-  };
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    st.tScroll = h > 0 ? window.scrollY / h : 0;
+  }, { passive: true });
 
-  /* ---------- Events ---------- */
-  function onScroll() {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    state.targetScrollProgress = docHeight > 0 ? window.scrollY / docHeight : 0;
-  }
+  window.addEventListener('mousemove', (e) => {
+    st.tmx = e.clientX / window.innerWidth;
+    st.tmy = 1.0 - e.clientY / window.innerHeight;
+    st.tmi = 1.0;
+  }, { passive: true });
 
-  function onMouseMove(e) {
-    state.targetMouseX = e.clientX / window.innerWidth;
-    state.targetMouseY = 1.0 - e.clientY / window.innerHeight;
-    state.targetMouseInfluence = 1.0;
-  }
+  document.addEventListener('mouseleave', () => { st.tmi = 0; });
+  window.addEventListener('click', () => { st.ripple = 1.0; st.rippleT = 0; st.ripping = true; });
+  window.addEventListener('resize', () => { renderer.setSize(window.innerWidth, window.innerHeight); uniforms.uRes.value.set(window.innerWidth, window.innerHeight); });
 
-  function onMouseLeave() {
-    state.targetMouseInfluence = 0;
-  }
+  window.fluidState = st;
 
-  function onClick() {
-    state.ripple = 1.0;
-    state.rippleTime = 0;
-    state.isRippling = true;
-  }
+  let lastT = 0;
+  const fpsInt = isMobile ? 1000 / 30 : 0;
 
-  function onResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
-  }
+  function tick(time) {
+    requestAnimationFrame(tick);
+    if (isMobile && time - lastT < fpsInt) return;
+    lastT = time;
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('mousemove', onMouseMove, { passive: true });
-  document.addEventListener('mouseleave', onMouseLeave);
-  window.addEventListener('click', onClick);
-  window.addEventListener('resize', onResize);
+    st.scroll += (st.tScroll - st.scroll) * 0.05;
+    st.mx += (st.tmx - st.mx) * 0.08;
+    st.my += (st.tmy - st.my) * 0.08;
+    st.mi += (st.tmi - st.mi) * 0.05;
 
-  window.fluidState = state;
-  window.fluidUniforms = uniforms;
-
-  /* ---------- Render Loop ---------- */
-  let lastTime = 0;
-  const FPS_INTERVAL = isMobile ? 1000 / 30 : 0;
-
-  function animate(time) {
-    requestAnimationFrame(animate);
-
-    if (isMobile && time - lastTime < FPS_INTERVAL) return;
-    lastTime = time;
-
-    const dt = 0.016;
-
-    const lerpFactor = 0.05;
-    state.scrollProgress += (state.targetScrollProgress - state.scrollProgress) * lerpFactor;
-    state.mouseX += (state.targetMouseX - state.mouseX) * 0.08;
-    state.mouseY += (state.targetMouseY - state.mouseY) * 0.08;
-    state.mouseInfluence += (state.targetMouseInfluence - state.mouseInfluence) * 0.05;
-
-    if (state.isRippling) {
-      state.rippleTime += dt;
-      state.ripple *= 0.97;
-      if (state.ripple < 0.01) {
-        state.ripple = 0;
-        state.isRippling = false;
-      }
+    if (st.ripping) {
+      st.rippleT += 0.016;
+      st.ripple *= 0.97;
+      if (st.ripple < 0.01) { st.ripple = 0; st.ripping = false; }
     }
 
     uniforms.uTime.value = time * 0.001;
-    uniforms.uScrollProgress.value = state.scrollProgress;
-    uniforms.uMouse.value.set(state.mouseX, state.mouseY);
-    uniforms.uMouseInfluence.value = state.mouseInfluence;
-    uniforms.uRipple.value = state.ripple;
-    uniforms.uRippleTime.value = state.rippleTime;
+    uniforms.uScroll.value = st.scroll;
+    uniforms.uMouse.value.set(st.mx, st.my);
+    uniforms.uMouseInf.value = st.mi;
+    uniforms.uRipple.value = st.ripple;
+    uniforms.uRippleT.value = st.rippleT;
 
     renderer.render(scene, camera);
   }
-
-  requestAnimationFrame(animate);
+  requestAnimationFrame(tick);
 })();
