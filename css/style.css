@@ -66,7 +66,7 @@
   --bubble-color: rgba(0,136,170,0.06);
 }
 
-html { scroll-behavior: smooth; font-size: 16px; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 5rem; }
 
 body {
   background: var(--bg);
@@ -98,9 +98,10 @@ a:hover { color: var(--accent-hover); }
 }
 @keyframes bubbleRise {
   0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 0.6; }
-  100% { transform: translateY(-110vh) translateX(30px) scale(0.5); opacity: 0; }
+  10%  { opacity: 0.8; }
+  50%  { transform: translateY(-55vh) translateX(20px) scale(0.8); opacity: 0.5; }
+  80%  { opacity: 0.3; }
+  100% { transform: translateY(-110vh) translateX(-10px) scale(0.4); opacity: 0; }
 }
 
 /* ===== Canvas ===== */
@@ -248,13 +249,24 @@ a:hover { color: var(--accent-hover); }
   margin-top: -2px; line-height: 0;
 }
 .wave-divider svg { display: block; width: 100%; height: 80px; }
-.wave-1 svg { animation: waveFloat 6s ease-in-out infinite; }
-.wave-2 svg { animation: waveFloat 8s ease-in-out infinite reverse; }
-.wave-3 svg { animation: waveFloat 7s ease-in-out infinite; }
+.wave-1 svg { animation: waveFloat1 8s ease-in-out infinite; }
+.wave-2 svg { animation: waveFloat2 10s ease-in-out infinite; }
+.wave-3 svg { animation: waveFloat3 9s ease-in-out infinite; }
 
-@keyframes waveFloat {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(-15px); }
+@keyframes waveFloat1 {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  33% { transform: translateX(-10px) translateY(-3px); }
+  66% { transform: translateX(8px) translateY(2px); }
+}
+@keyframes waveFloat2 {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  40% { transform: translateX(12px) translateY(-2px); }
+  70% { transform: translateX(-8px) translateY(3px); }
+}
+@keyframes waveFloat3 {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  30% { transform: translateX(-8px) translateY(2px); }
+  60% { transform: translateX(10px) translateY(-3px); }
 }
 
 /* ===== Sections ===== */
@@ -263,6 +275,22 @@ section {
   display: flex; align-items: center; justify-content: center;
   padding: 8rem 3rem; position: relative;
   transition: background 0.8s ease;
+}
+
+/* Section entrance animations */
+section > .about-wrapper,
+section > .projects-wrapper,
+section > .contact-wrapper {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+section > .about-wrapper.section-visible,
+section > .projects-wrapper.section-visible,
+section > .contact-wrapper.section-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Depth progression backgrounds */
@@ -287,7 +315,7 @@ section {
 }
 
 /* ===== Hero ===== */
-.hero { flex-direction: column; text-align: center; padding-top: 0; }
+.hero { flex-direction: column; text-align: center; padding-top: 6rem; }
 .hero-content { transition: opacity 0.5s ease, transform 0.5s ease; }
 
 .hero-greeting {
@@ -369,7 +397,8 @@ section {
 }
 .about-text .reveal-word {
   display: inline-block; opacity: 0; transform: translateY(12px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .about-text .reveal-word.visible { opacity: 1; transform: translateY(0); }
 
@@ -421,12 +450,13 @@ section {
   align-items: center;
   padding: 2rem 0;
   border-bottom: 1px solid var(--glass-border);
-  opacity: 0; transform: translateX(-40px);
-  transition: opacity 0.7s var(--expo), transform 0.7s var(--expo),
-              background 0.3s ease;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              background 0.4s ease;
   position: relative;
 }
-.project-item.visible { opacity: 1; transform: translateX(0); }
+.project-item.visible { opacity: 1; transform: translateY(0); }
 .project-item:first-child { border-top: 1px solid var(--glass-border); }
 
 .project-item::before {
@@ -570,4 +600,7 @@ section {
   body { cursor: auto; }
   .project-item, .hero-greeting, .hero-name, .hero-tagline, .hero-cta { opacity: 1; transform: none; }
   .about-text .reveal-word { opacity: 1; transform: none; }
+  section > .about-wrapper,
+  section > .projects-wrapper,
+  section > .contact-wrapper { opacity: 1; transform: none; }
 }
