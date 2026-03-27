@@ -233,14 +233,37 @@
     contactObs.observe(contactSection);
   }
 
-  /* ---------- Wave Divider Animation ---------- */
+  /* ---------- Wave Divider Parallax ---------- */
+  const waveDividers = document.querySelectorAll('.wave-divider');
+  const wavePaths = [];
+  waveDividers.forEach((w, idx) => {
+    const paths = w.querySelectorAll('svg path');
+    wavePaths.push({ el: w, paths: paths, speed: [0.15, 0.1, 0.05][idx] || 0.1 });
+  });
+
+  function updateWaveParallax() {
+    const scrollY = window.scrollY;
+    const winH = window.innerHeight;
+    wavePaths.forEach(({ el, paths, speed }) => {
+      const rect = el.getBoundingClientRect();
+      const center = rect.top + rect.height / 2;
+      const offset = (center - winH / 2) * speed;
+      paths.forEach((path, i) => {
+        const layerSpeed = 1 - i * 0.3;
+        path.style.transform = 'translateY(' + (offset * layerSpeed) + 'px)';
+      });
+    });
+  }
+  window.addEventListener('scroll', updateWaveParallax, { passive: true });
+
+  /* ---------- Wave Divider Fade In ---------- */
   const waveObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; waveObs.unobserve(e.target); } });
-  }, { root: null, threshold: 0.15 });
+    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; waveObs.unobserve(e.target); } });
+  }, { root: null, threshold: 0.1 });
 
   document.querySelectorAll('.wave-divider').forEach(w => {
-    w.style.opacity = '0'; w.style.transform = 'translateY(20px)';
-    w.style.transition = 'opacity 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    w.style.opacity = '0';
+    w.style.transition = 'opacity 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     waveObs.observe(w);
   });
 

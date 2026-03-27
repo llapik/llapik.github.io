@@ -245,28 +245,34 @@ a:hover { color: var(--accent-hover); }
 
 /* ===== Wave Dividers ===== */
 .wave-divider {
-  position: relative; width: 100%; z-index: 1;
-  margin-top: -2px; line-height: 0;
+  position: relative; width: 100%; z-index: 2;
+  margin-top: -80px; margin-bottom: -40px; line-height: 0;
+  pointer-events: none;
 }
-.wave-divider svg { display: block; width: 100%; height: 80px; }
-.wave-1 svg { animation: waveFloat1 8s ease-in-out infinite; }
-.wave-2 svg { animation: waveFloat2 10s ease-in-out infinite; }
-.wave-3 svg { animation: waveFloat3 9s ease-in-out infinite; }
+.wave-divider svg {
+  display: block; width: 110%; height: 200px;
+  margin-left: -5%;
+  filter: blur(0.5px);
+}
+.wave-divider svg path { transition: fill 0.8s ease; }
+.wave-1 svg { animation: waveFloat1 10s ease-in-out infinite; }
+.wave-2 svg { animation: waveFloat2 12s ease-in-out infinite; }
+.wave-3 svg { animation: waveFloat3 11s ease-in-out infinite; }
 
 @keyframes waveFloat1 {
   0%, 100% { transform: translateX(0) translateY(0); }
-  33% { transform: translateX(-10px) translateY(-3px); }
-  66% { transform: translateX(8px) translateY(2px); }
+  33% { transform: translateX(-12px) translateY(-4px); }
+  66% { transform: translateX(10px) translateY(3px); }
 }
 @keyframes waveFloat2 {
   0%, 100% { transform: translateX(0) translateY(0); }
-  40% { transform: translateX(12px) translateY(-2px); }
-  70% { transform: translateX(-8px) translateY(3px); }
+  40% { transform: translateX(14px) translateY(-3px); }
+  70% { transform: translateX(-10px) translateY(4px); }
 }
 @keyframes waveFloat3 {
   0%, 100% { transform: translateX(0) translateY(0); }
-  30% { transform: translateX(-8px) translateY(2px); }
-  60% { transform: translateX(10px) translateY(-3px); }
+  30% { transform: translateX(-10px) translateY(3px); }
+  60% { transform: translateX(12px) translateY(-4px); }
 }
 
 /* ===== Sections ===== */
@@ -293,11 +299,17 @@ section > .contact-wrapper.section-visible {
   transform: translateY(0);
 }
 
-/* Depth progression backgrounds */
+/* Depth progression — gradient blending between sections */
 .hero    { background: transparent; }
-.about   { background: var(--bg-mid); }
-.projects{ background: var(--bg-deep); }
-.contact { background: var(--bg); }
+.about   {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-mid) 15%, var(--bg-mid) 85%, var(--bg-mid) 100%);
+}
+.projects {
+  background: linear-gradient(180deg, var(--bg-mid) 0%, var(--bg-deep) 20%, var(--bg-deep) 80%, var(--bg-deep) 100%);
+}
+.contact {
+  background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 25%, var(--bg) 100%);
+}
 
 .section-title {
   font-family: var(--font-display);
@@ -586,7 +598,8 @@ section > .contact-wrapper.section-visible {
   }
 
   .contact-links { flex-direction: column; align-items: center; }
-  .wave-divider svg { height: 50px; }
+  .wave-divider svg { height: 120px; }
+  .wave-divider { margin-top: -50px; margin-bottom: -25px; }
 }
 
 /* ===== Reduced Motion ===== */
