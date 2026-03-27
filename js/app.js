@@ -64,30 +64,48 @@
   /* ---------- Hero ---------- */
   function animateHero() {
     [
-      { el: document.querySelector('.hero-greeting'), delay: 400 },
-      { el: document.querySelector('.hero-name'),     delay: 600 },
-      { el: document.querySelector('.hero-tagline'),  delay: 900 },
-      { el: document.querySelector('.hero-cta'),      delay: 1100 }
+      { el: document.querySelector('.hero-greeting'), delay: 500 },
+      { el: document.querySelector('.hero-name'),     delay: 750 },
+      { el: document.querySelector('.hero-tagline'),  delay: 1100 },
+      { el: document.querySelector('.hero-cta'),      delay: 1400 }
     ].forEach(({ el, delay }) => {
       if (!el) return;
       setTimeout(() => {
-        el.style.transition = 'opacity 1s var(--expo), transform 1s var(--expo)';
+        el.style.transition = 'opacity 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         el.style.opacity = '1';
         el.style.transform = 'translateY(0)';
       }, delay);
     });
   }
 
-  /* ---------- Hero Parallax ---------- */
+  /* ---------- Hero Parallax (smoothed with lerp) ---------- */
   const heroContent = document.querySelector('.hero-content');
+  let heroTargetY = 0, heroCurrentY = 0, heroTargetOpacity = 1, heroCurrentOpacity = 1;
+  let heroRafRunning = false;
+
+  function lerpHero() {
+    heroCurrentY += (heroTargetY - heroCurrentY) * 0.08;
+    heroCurrentOpacity += (heroTargetOpacity - heroCurrentOpacity) * 0.08;
+    if (heroContent) {
+      heroContent.style.opacity = heroCurrentOpacity;
+      heroContent.style.transform = 'translateY(' + heroCurrentY + 'px) scale(' + (1 - (1 - heroCurrentOpacity) * 0.06) + ')';
+    }
+    if (Math.abs(heroTargetY - heroCurrentY) > 0.5 || Math.abs(heroTargetOpacity - heroCurrentOpacity) > 0.005) {
+      requestAnimationFrame(lerpHero);
+    } else {
+      heroRafRunning = false;
+    }
+  }
+
   window.addEventListener('scroll', () => {
     if (!heroContent) return;
     const s = window.scrollY, h = window.innerHeight;
     if (s < h) {
       const p = s / h;
-      heroContent.style.opacity = 1 - p * 1.3;
-      heroContent.style.transform = 'translateY(' + (s * 0.35) + 'px) scale(' + (1 - p * 0.05) + ')';
+      heroTargetOpacity = Math.max(0, 1 - p * 1.3);
+      heroTargetY = s * 0.3;
     }
+    if (!heroRafRunning) { heroRafRunning = true; requestAnimationFrame(lerpHero); }
   }, { passive: true });
 
   /* ---------- Navigation ---------- */
@@ -157,8 +175,19 @@
   document.querySelectorAll('.section-title, .section-subtitle').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(24px)';
-    el.style.transition = 'opacity 0.8s var(--expo), transform 0.8s var(--expo)';
+    el.style.transition = 'opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     titleObs.observe(el);
+  });
+
+  /* ---------- Section Wrapper Reveal ---------- */
+  const sectionWrapperObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('section-visible'); sectionWrapperObs.unobserve(e.target); }
+    });
+  }, { root: null, threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.about-wrapper, .projects-wrapper, .contact-wrapper').forEach(el => {
+    sectionWrapperObs.observe(el);
   });
 
   /* ---------- Skill Tags Stagger ---------- */
@@ -178,7 +207,7 @@
   if (skillsGrid) {
     skillsGrid.querySelectorAll('.skill-tag').forEach(tag => {
       tag.style.opacity = '0'; tag.style.transform = 'translateY(16px)';
-      tag.style.transition = 'opacity 0.6s ease, transform 0.6s var(--expo), border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease';
+      tag.style.transition = 'opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease';
     });
     skillObs.observe(skillsGrid);
   }
@@ -199,7 +228,7 @@
   if (contactSection) {
     contactSection.querySelectorAll('.contact-link').forEach(link => {
       link.style.opacity = '0'; link.style.transform = 'translateY(20px)';
-      link.style.transition = 'opacity 0.6s ease, transform 0.6s var(--expo), border-color 0.4s ease, box-shadow 0.4s ease';
+      link.style.transition = 'opacity 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.4s ease, box-shadow 0.4s ease';
     });
     contactObs.observe(contactSection);
   }
@@ -207,11 +236,11 @@
   /* ---------- Wave Divider Animation ---------- */
   const waveObs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; waveObs.unobserve(e.target); } });
-  }, { root: null, threshold: 0.2 });
+  }, { root: null, threshold: 0.15 });
 
   document.querySelectorAll('.wave-divider').forEach(w => {
     w.style.opacity = '0'; w.style.transform = 'translateY(20px)';
-    w.style.transition = 'opacity 1s var(--expo), transform 1s var(--expo)';
+    w.style.transition = 'opacity 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     waveObs.observe(w);
   });
 
@@ -310,10 +339,32 @@
   });
 
   /* ---------- Smooth Scroll ---------- */
+  function smoothScrollTo(targetEl) {
+    const navH = nav ? nav.offsetHeight : 0;
+    const targetY = targetEl.getBoundingClientRect().top + window.scrollY - navH;
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    const duration = Math.min(1200, Math.max(600, Math.abs(diff) * 0.5));
+    let start = null;
+
+    function easeOutExpo(t) {
+      return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+
+    function step(ts) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const progress = Math.min(elapsed / duration, 1);
+      window.scrollTo(0, startY + diff * easeOutExpo(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', (e) => {
       const target = document.querySelector(anchor.getAttribute('href'));
-      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+      if (target) { e.preventDefault(); smoothScrollTo(target); }
     });
   });
 
