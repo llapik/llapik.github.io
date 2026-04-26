@@ -41,10 +41,7 @@
   }
   </script>
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts: Helvetica system stack — no external load needed -->
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -64,6 +61,9 @@
 
   <!-- Bubbles Overlay -->
   <div class="bubbles" id="bubbles" aria-hidden="true"></div>
+
+  <!-- Creatures Layer (abstract circle-based sprites) -->
+  <div class="creatures" id="creatures" aria-hidden="true"></div>
 
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
@@ -104,8 +104,8 @@
       <div class="hero-content">
         <p class="hero-greeting" data-i18n="hero.greeting">Привет, я</p>
         <h1 class="hero-name">
-          <span class="hero-name-line">Alexandr</span>
-          <span class="hero-name-line accent-gradient">Stih</span>
+          <span class="hero-name-line" data-scramble>Alexandr</span>
+          <span class="hero-name-line accent-gradient" data-text="Stih" data-scramble>Stih</span>
         </h1>
         <p class="hero-tagline" data-i18n="hero.tagline">Создаю цифровые продукты на стыке дизайна, кода и безответственности</p>
         <a href="#projects" class="hero-cta interactive" data-i18n="hero.cta">Смотреть проекты <span>&rarr;</span></a>
