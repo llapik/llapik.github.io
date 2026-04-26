@@ -29,11 +29,11 @@
   /* ---------- Bubbles ---------- */
   const bubblesContainer = document.getElementById('bubbles');
   if (bubblesContainer) {
-    const BUBBLE_COUNT = 15;
+    const BUBBLE_COUNT = 18;
     for (let i = 0; i < BUBBLE_COUNT; i++) {
       const b = document.createElement('div');
       b.className = 'bubble';
-      const size = 4 + Math.random() * 16;
+      const size = 4 + Math.random() * 18;
       b.style.width = size + 'px';
       b.style.height = size + 'px';
       b.style.left = Math.random() * 100 + '%';
@@ -41,6 +41,74 @@
       b.style.animationDelay = (Math.random() * 10) + 's';
       bubblesContainer.appendChild(b);
     }
+  }
+
+  /* ---------- Creatures (jellyfish, fish, droplets, orbits) ---------- */
+  const creaturesLayer = document.getElementById('creatures');
+  if (creaturesLayer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const isMobile = window.innerWidth < 768;
+
+    function makeJellyfish() {
+      const c = document.createElement('div');
+      c.className = 'creature jellyfish';
+      c.innerHTML = '<div class="body"></div><div class="tentacles"><span></span><span></span><span></span></div>';
+      const scale = 0.6 + Math.random() * 1.2;
+      c.style.transform = `scale(${scale})`;
+      c.style.left = Math.random() * 90 + '%';
+      c.style.top = Math.random() * 80 + 10 + '%';
+      c.style.opacity = (0.3 + Math.random() * 0.5).toFixed(2);
+      c.style.animationDuration = (18 + Math.random() * 14) + 's';
+      c.style.animationDelay = (-Math.random() * 12) + 's';
+      return c;
+    }
+
+    function makeFish() {
+      const c = document.createElement('div');
+      c.className = 'creature fish';
+      c.innerHTML = '<div class="fish-body"></div>';
+      const scale = 0.7 + Math.random() * 1.4;
+      const flip = Math.random() > 0.5 ? -1 : 1;
+      c.style.transform = `scale(${scale * flip}, ${scale})`;
+      c.style.top = Math.random() * 90 + '%';
+      c.style.opacity = (0.35 + Math.random() * 0.4).toFixed(2);
+      c.style.animationDuration = (14 + Math.random() * 16) + 's';
+      c.style.animationDelay = (-Math.random() * 20) + 's';
+      return c;
+    }
+
+    function makeDroplet() {
+      const c = document.createElement('div');
+      c.className = 'creature droplet';
+      const scale = 0.5 + Math.random() * 1.6;
+      c.style.transform = `scale(${scale})`;
+      c.style.left = Math.random() * 95 + '%';
+      c.style.top = Math.random() * 90 + '%';
+      c.style.opacity = (0.25 + Math.random() * 0.5).toFixed(2);
+      c.style.animationDuration = `${3 + Math.random() * 4}s, ${22 + Math.random() * 14}s`;
+      c.style.animationDelay = `${-Math.random() * 4}s, ${-Math.random() * 20}s`;
+      return c;
+    }
+
+    function makeOrbit() {
+      const c = document.createElement('div');
+      c.className = 'creature orbit-ring';
+      const scale = 0.5 + Math.random() * 1.0;
+      c.style.transform = `scale(${scale})`;
+      c.style.left = Math.random() * 90 + '%';
+      c.style.top = Math.random() * 85 + '%';
+      c.style.opacity = (0.25 + Math.random() * 0.4).toFixed(2);
+      c.style.animationDelay = (-Math.random() * 25) + 's';
+      return c;
+    }
+
+    const counts = isMobile
+      ? { jelly: 3, fish: 4, drop: 5, orbit: 2 }
+      : { jelly: 6, fish: 7, drop: 9, orbit: 4 };
+
+    for (let i = 0; i < counts.jelly; i++) creaturesLayer.appendChild(makeJellyfish());
+    for (let i = 0; i < counts.fish; i++)  creaturesLayer.appendChild(makeFish());
+    for (let i = 0; i < counts.drop; i++)  creaturesLayer.appendChild(makeDroplet());
+    for (let i = 0; i < counts.orbit; i++) creaturesLayer.appendChild(makeOrbit());
   }
 
   /* ---------- Depth Indicator ---------- */
@@ -76,6 +144,47 @@
         el.style.transform = 'translateY(0)';
       }, delay);
     });
+
+    // Scramble effect on hero name lines
+    setTimeout(() => {
+      document.querySelectorAll('.hero-name [data-scramble]').forEach((el, idx) => {
+        scrambleText(el, 900 + idx * 200);
+      });
+    }, 800);
+  }
+
+  /* ---------- Text Scramble Effect ---------- */
+  const SCRAMBLE_CHARS = '!<>-_\\/[]{}—=+*^?#________';
+  function scrambleText(el, duration = 1200) {
+    const hasDataText = el.hasAttribute('data-text');
+    const finalText = (el.dataset.scrambleFinal) || el.textContent;
+    el.dataset.scrambleFinal = finalText;
+    const len = finalText.length;
+    const start = performance.now();
+
+    function frame(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      let out = '';
+      for (let i = 0; i < len; i++) {
+        const charProgress = progress * len - i;
+        if (charProgress >= 1) {
+          out += finalText[i];
+        } else if (charProgress > 0) {
+          out += finalText[i] === ' ' ? ' ' : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        } else {
+          out += ' ';
+        }
+      }
+      el.textContent = out;
+      if (hasDataText) el.setAttribute('data-text', out);
+      if (progress < 1) requestAnimationFrame(frame);
+      else {
+        el.textContent = finalText;
+        if (hasDataText) el.setAttribute('data-text', finalText);
+      }
+    }
+    requestAnimationFrame(frame);
   }
 
   /* ---------- Hero Parallax (smoothed with lerp) ---------- */
@@ -167,9 +276,18 @@
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); itemObs.unobserve(e.target); } });
   }, { root: null, threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-  /* ---------- Title Reveal ---------- */
+  /* ---------- Title Reveal + Scramble ---------- */
   const titleObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; titleObs.unobserve(e.target); } });
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+        if (e.target.classList.contains('section-title')) {
+          scrambleText(e.target, 700);
+        }
+        titleObs.unobserve(e.target);
+      }
+    });
   }, obsOpts);
 
   document.querySelectorAll('.section-title, .section-subtitle').forEach(el => {

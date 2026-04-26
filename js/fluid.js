@@ -89,15 +89,15 @@
         c += wave * fade * 0.4;
       }
 
-      // Color: cyan → teal → purple shift with depth
-      vec3 colCyan   = vec3(0.0, 0.83, 1.0);
-      vec3 colTeal   = vec3(0.05, 0.94, 0.75);
-      vec3 colPurple = vec3(0.48, 0.41, 0.93);
+      // Color: monochrome turquoise (light → mid → deep)
+      vec3 colLight = vec3(0.37, 1.0, 0.91);
+      vec3 colMid   = vec3(0.11, 0.91, 0.85);
+      vec3 colDeep  = vec3(0.04, 0.55, 0.52);
 
       float colorShift = sin(p.x * 2.0 + t) * 0.5 + 0.5;
-      vec3 shallowColor = mix(colCyan, colTeal, colorShift);
-      vec3 deepColor = mix(colPurple, colCyan, colorShift * 0.5);
-      vec3 waterColor = mix(shallowColor, deepColor, depth);
+      vec3 shallowColor = mix(colLight, colMid, colorShift);
+      vec3 deepColor    = mix(colMid, colDeep, colorShift * 0.7);
+      vec3 waterColor   = mix(shallowColor, deepColor, depth);
 
       // Light theme: darker caustics on light bg
       if (uDark < 0.5) {
