@@ -54,6 +54,19 @@ a { color: var(--ink); text-decoration: none; }
 a:hover { color: var(--dim); }
 ::selection { background: var(--ink); color: var(--bg); }
 
+/* ===== Scroll progress bar ===== */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 1px; z-index: 600;
+  pointer-events: none;
+}
+.scroll-progress-fill {
+  height: 100%; width: 0%;
+  background: var(--ink);
+  opacity: 0.35;
+  transition: width 0.08s linear;
+}
+
 /* ===== Grain overlay ===== */
 .grain {
   position: fixed; inset: 0;
@@ -113,8 +126,8 @@ a:hover { color: var(--dim); }
   border-radius: 50%; pointer-events: none;
   z-index: 10000;
   transform: translate(-50%, -50%);
-  transition: width 0.4s var(--spring), height 0.4s var(--spring);
-  mix-blend-mode: difference;
+  transition: width 0.4s var(--spring), height 0.4s var(--spring),
+              border-color 0.3s ease;
 }
 .cursor.cursor--hover { width: 52px; height: 52px; }
 .cursor.cursor--click { transform: translate(-50%, -50%) scale(0.8); }
@@ -126,7 +139,7 @@ a:hover { color: var(--dim); }
   border-radius: 50%; pointer-events: none;
   z-index: 10001;
   transform: translate(-50%, -50%);
-  mix-blend-mode: difference;
+  transition: background 0.3s ease;
 }
 
 /* ===== Loader ===== */
@@ -226,6 +239,7 @@ section {
   display: flex; align-items: center;
 }
 
+/* Section label */
 .section-label {
   font-family: var(--font-mono); font-size: 0.68rem;
   color: var(--dim); letter-spacing: 0.18em; text-transform: uppercase;
@@ -235,6 +249,7 @@ section {
 }
 .section-label.visible { opacity: 1; transform: translateY(0); }
 
+/* Section heading — default fade-up (no JS) */
 .section-heading {
   font-family: var(--font-hel);
   font-size: clamp(3.2rem, 8vw, 7rem);
@@ -244,6 +259,24 @@ section {
   transition: opacity 1s var(--smooth), transform 1s var(--smooth);
 }
 .section-heading.visible { opacity: 1; transform: translateY(0); }
+
+/* When char-reveal is active, heading is just a container */
+.section-heading.has-chars {
+  opacity: 1 !important; transform: none !important;
+  transition: none !important;
+}
+
+/* Individual heading characters */
+.heading-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.55em);
+  transition: opacity 0.45s var(--expo), transform 0.45s var(--expo);
+}
+.section-heading.reveal-done .heading-char {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* ===== Hero ===== */
 .hero {
@@ -287,21 +320,23 @@ section {
   color: var(--ink); letter-spacing: 0.16em; text-transform: uppercase;
   border: 1px solid var(--ink); padding: 0.85rem 1.8rem;
   opacity: 0; transform: translateY(12px);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .hero-cta:hover { background: var(--ink); color: var(--bg); }
 .hero-cta span { transition: transform 0.3s var(--spring); }
-.hero-cta:hover span { transform: translateX(4px); }
+.hero-cta:hover span { transform: translateX(5px); }
 
-/* Hero decorative orb */
+/* Hero decorative orb — parallax via CSS custom property */
 .hero-orb {
-  position: absolute; right: -4vw; top: 50%; transform: translateY(-50%);
+  position: absolute; right: -4vw; top: 50%;
+  transform: translateY(calc(-50% + var(--orb-parallax, 0px)));
   pointer-events: none; z-index: 1;
   color: var(--ink);
-  opacity: 0; animation: orbFadeIn 1.2s 1s var(--expo) forwards;
+  opacity: 0; animation: orbFadeIn 1.4s 0.8s var(--expo) forwards;
 }
 @keyframes orbFadeIn { to { opacity: 1; } }
 
+/* Moon orbit animation */
 .hero-moon-orbit {
   animation: moonOrbit 14s linear infinite;
 }
@@ -314,7 +349,7 @@ section {
 .hero-scroll-hint {
   position: absolute; bottom: 2.5rem; left: 3rem;
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem;
-  opacity: 0; animation: fadeIn 1s 2.4s forwards;
+  opacity: 0; animation: fadeIn 1s 2.6s forwards;
 }
 .hero-scroll-hint span {
   font-family: var(--font-mono); font-size: 0.6rem;
@@ -323,7 +358,7 @@ section {
 .scroll-line {
   width: 1px; height: 36px;
   background: linear-gradient(to bottom, var(--dim), transparent);
-  animation: scrollPulse 2s ease-in-out infinite;
+  animation: scrollPulse 2.2s ease-in-out infinite;
 }
 @keyframes scrollPulse {
   0%   { transform: scaleY(0); transform-origin: top; }
@@ -352,24 +387,34 @@ section {
 }
 .about-text .reveal-word.visible { opacity: 1; transform: translateY(0); }
 
-/* Skills as constellation tags */
+/* Skills fly-in from different directions */
 .skills-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .skill-tag {
   font-family: var(--font-mono); font-size: 0.62rem;
   color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase;
   border: 1px solid var(--border); padding: 0.4rem 1rem;
-  opacity: 0; transform: translateY(12px);
+  opacity: 0;
+  transform: translate(var(--fly-x, 0px), var(--fly-y, 16px)) scale(0.8);
   transition: color 0.3s ease, border-color 0.3s ease,
-              transform 0.4s var(--spring), opacity 0.6s var(--smooth);
+              opacity 0.55s var(--expo), transform 0.65s var(--spring);
 }
-.skill-tag.visible { opacity: 1; transform: translateY(0); }
-.skill-tag:hover { color: var(--ink); border-color: var(--ink); transform: translateY(-2px); }
+.skill-tag.visible {
+  opacity: 1;
+  transform: translate(0px, 0px) scale(1);
+}
+.skill-tag:hover { color: var(--ink); border-color: var(--ink); transform: translateY(-2px) !important; }
 
-/* About decorative orb */
+/* About decorative orb — slides in from right on scroll */
 .about-orb {
-  position: absolute; right: -8vw; top: 50%; transform: translateY(-50%);
+  position: absolute; right: -8vw; top: 50%;
+  transform: translateY(-50%) translateX(10vw);
   pointer-events: none; z-index: 1;
-  color: var(--ink); opacity: 0.06;
+  color: var(--ink); opacity: 0;
+  transition: opacity 1.4s var(--expo), transform 1.4s var(--expo);
+}
+.about-orb.visible {
+  opacity: 0.08;
+  transform: translateY(-50%) translateX(0);
 }
 
 /* ===== Projects ===== */
@@ -459,7 +504,7 @@ section {
   line-height: 1.6; margin-bottom: 3.5rem;
 }
 
-/* Three channel orbs */
+/* Three channel orbs — converge from spread positions */
 .contact-channels {
   display: flex; gap: 4rem; align-items: flex-start; flex-wrap: wrap;
 }
@@ -467,10 +512,14 @@ section {
 .contact-channel {
   display: flex; flex-direction: column; align-items: center;
   gap: 1.25rem; text-decoration: none;
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.9s var(--smooth), transform 0.9s var(--smooth);
+  opacity: 0;
+  transform: translateX(var(--channel-offset, 0px)) translateY(16px);
+  transition: opacity 0.9s var(--expo), transform 0.9s var(--expo);
 }
-.contact-channel.visible { opacity: 1; transform: translateY(0); }
+.contact-channel.visible {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
 
 .contact-channel-orb {
   width: 88px; height: 88px; border-radius: 50%;
@@ -480,8 +529,7 @@ section {
 }
 .contact-channel-orb::after {
   content: '';
-  position: absolute;
-  inset: -16px;
+  position: absolute; inset: -16px;
   border: 1px solid var(--border);
   border-radius: 50%;
   animation: orbRingPulse 3.5s ease-in-out infinite;
@@ -489,7 +537,7 @@ section {
 .contact-channel:hover .contact-channel-orb { transform: scale(1.1); }
 
 @keyframes orbRingPulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
+  0%, 100% { transform: scale(1); opacity: 0.4; }
   50%       { transform: scale(1.07); opacity: 1; }
 }
 
@@ -512,11 +560,6 @@ section {
 .footer p {
   font-family: var(--font-mono); font-size: 0.62rem;
   color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase;
-}
-
-/* ===== Scramble chars ===== */
-.scramble-char {
-  display: inline-block;
 }
 
 /* ===== Responsive ===== */
@@ -572,8 +615,10 @@ section {
   .cursor, .cursor-dot, .starfield, .grain { display: none !important; }
   .project-item, .hero-greeting, .hero-name, .hero-tagline, .hero-cta,
   .section-label, .section-heading { opacity: 1 !important; transform: none !important; }
+  .heading-char { opacity: 1 !important; transform: none !important; }
   .about-text .reveal-word { opacity: 1 !important; transform: none !important; }
   .skill-tag { opacity: 1 !important; transform: none !important; }
   .about-wrapper, .projects-wrapper, .contact-wrapper { opacity: 1 !important; transform: none !important; }
   .contact-channel { opacity: 1 !important; transform: none !important; }
+  .about-orb { opacity: 0.08 !important; transform: translateY(-50%) !important; }
 }

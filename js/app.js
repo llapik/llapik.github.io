@@ -32,6 +32,15 @@
     });
   }
 
+  /* ---------- Scroll Progress Bar ---------- */
+  const progressFill = document.querySelector('.scroll-progress-fill');
+  function updateProgress() {
+    if (!progressFill) return;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progressFill.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+
   /* ---------- Starfield ---------- */
   const starCanvas = document.getElementById('starfield');
   if (starCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -130,8 +139,41 @@
     requestAnimationFrame(frame);
   }
 
+  /* ---------- Heading character reveal (reel-style) ---------- */
+  function initHeadingCharReveal(el) {
+    const nodes = Array.from(el.childNodes);
+    el.innerHTML = '';
+    nodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent.split('').forEach(ch => {
+          if (ch === ' ' || ch === '\n') {
+            if (ch === ' ') el.appendChild(document.createTextNode(' '));
+          } else {
+            const span = document.createElement('span');
+            span.className = 'heading-char';
+            span.textContent = ch;
+            el.appendChild(span);
+          }
+        });
+      } else {
+        el.appendChild(node.cloneNode(true));
+      }
+    });
+    // Staggered delays — 0.04s per char, like the reel
+    el.querySelectorAll('.heading-char').forEach((char, i) => {
+      char.style.transitionDelay = (i * 0.04) + 's';
+    });
+    el.classList.add('has-chars');
+  }
+
+  // Init all section headings on load
+  document.querySelectorAll('.section-heading').forEach(el => {
+    initHeadingCharReveal(el);
+  });
+
   /* ---------- Hero Parallax ---------- */
   const heroContent = document.querySelector('.hero-content');
+  const heroOrb = document.querySelector('.hero-orb');
   let heroTargetY = 0, heroCurrentY = 0, heroTargetO = 1, heroCurrentO = 1, heroRaf = false;
 
   function lerpHero() {
@@ -149,14 +191,20 @@
   }
 
   window.addEventListener('scroll', () => {
-    if (!heroContent) return;
     const s = window.scrollY, h = window.innerHeight;
-    if (s < h) {
+
+    // Hero content parallax + fade
+    if (heroContent && s < h) {
       const p = s / h;
       heroTargetO = Math.max(0, 1 - p * 1.4);
       heroTargetY = s * 0.28;
+      if (!heroRaf) { heroRaf = true; requestAnimationFrame(lerpHero); }
     }
-    if (!heroRaf) { heroRaf = true; requestAnimationFrame(lerpHero); }
+
+    // Hero orb slower parallax
+    if (heroOrb) {
+      heroOrb.style.setProperty('--orb-parallax', (s * 0.1) + 'px');
+    }
   }, { passive: true });
 
   /* ---------- Navigation ---------- */
@@ -191,19 +239,27 @@
   }
   window.addEventListener('scroll', updateActiveNav, { passive: true });
 
-  /* ---------- Section heading + label reveal ---------- */
-  const headingObs = new IntersectionObserver((entries) => {
+  /* ---------- Section label reveal ---------- */
+  const labelObs = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         e.target.classList.add('visible');
+        labelObs.unobserve(e.target);
+      }
+    });
+  }, { root: null, threshold: 0.15 });
+  document.querySelectorAll('.section-label').forEach(el => labelObs.observe(el));
+
+  /* ---------- Section heading char reveal ---------- */
+  const headingObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('reveal-done');
         headingObs.unobserve(e.target);
       }
     });
   }, { root: null, threshold: 0.15 });
-
-  document.querySelectorAll('.section-label, .section-heading').forEach(el => {
-    headingObs.observe(el);
-  });
+  document.querySelectorAll('.section-heading').forEach(el => headingObs.observe(el));
 
   /* ---------- Section wrapper reveal ---------- */
   const wrapperObs = new IntersectionObserver((entries) => {
@@ -211,14 +267,23 @@
       if (e.isIntersecting) { e.target.classList.add('section-visible'); wrapperObs.unobserve(e.target); }
     });
   }, { root: null, threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
-
   document.querySelectorAll('.about-wrapper, .projects-wrapper, .contact-wrapper').forEach(el => {
     wrapperObs.observe(el);
   });
 
+  /* ---------- About orb slide-in ---------- */
+  const aboutOrb = document.querySelector('.about-orb');
+  if (aboutOrb) {
+    const orbObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { aboutOrb.classList.add('visible'); orbObs.unobserve(e.target); }
+      });
+    }, { root: null, threshold: 0.1 });
+    orbObs.observe(document.getElementById('about'));
+  }
+
   /* ---------- Word reveal on about text ---------- */
   const aboutText = document.getElementById('about-text');
-
   const wordObs = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -245,37 +310,49 @@
   initWordReveal();
   if (aboutText) aboutText.addEventListener('i18n:updated', initWordReveal);
 
-  /* ---------- Skill tags stagger reveal ---------- */
-  const skillObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('.skill-tag').forEach((tag, i) => {
-          tag.style.transitionDelay = (i * 0.07) + 's';
-          tag.classList.add('visible');
-        });
-        skillObs.unobserve(e.target);
-      }
-    });
-  }, { root: null, threshold: 0.15 });
-
+  /* ---------- Skills fly-in (golden angle offsets, like SceneSkills) ---------- */
   const skillsGrid = document.querySelector('.skills-grid');
-  if (skillsGrid) skillObs.observe(skillsGrid);
-
-  /* ---------- Contact channels reveal ---------- */
-  const channelObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('.contact-channel').forEach((ch, i) => {
-          ch.style.transitionDelay = (i * 0.18) + 's';
-          ch.classList.add('visible');
-        });
-        channelObs.unobserve(e.target);
-      }
+  if (skillsGrid) {
+    // Assign fly-in directions based on golden angle (137.5°), scaled for web
+    skillsGrid.querySelectorAll('.skill-tag').forEach((tag, i) => {
+      const angle = (i * 137.5) * (Math.PI / 180);
+      const dist = 120 + (i % 3) * 40; // vary distances a bit
+      tag.style.setProperty('--fly-x', Math.cos(angle) * dist + 'px');
+      tag.style.setProperty('--fly-y', Math.sin(angle) * (dist * 0.55) + 'px');
+      tag.style.transitionDelay = (i * 0.07) + 's';
     });
-  }, { root: null, threshold: 0.15 });
 
+    const skillObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.skill-tag').forEach(tag => tag.classList.add('visible'));
+          skillObs.unobserve(e.target);
+        }
+      });
+    }, { root: null, threshold: 0.15 });
+    skillObs.observe(skillsGrid);
+  }
+
+  /* ---------- Contact channels converge (like SceneContact) ---------- */
   const contactChannels = document.querySelector('.contact-channels');
-  if (contactChannels) channelObs.observe(contactChannels);
+  if (contactChannels) {
+    // Channels start spread apart (left, center, right) and converge
+    const offsets = [-220, 0, 220];
+    contactChannels.querySelectorAll('.contact-channel').forEach((ch, i) => {
+      ch.style.setProperty('--channel-offset', (offsets[i] || 0) + 'px');
+      ch.style.transitionDelay = (i * 0.12) + 's';
+    });
+
+    const channelObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          contactChannels.querySelectorAll('.contact-channel').forEach(ch => ch.classList.add('visible'));
+          channelObs.unobserve(e.target);
+        }
+      });
+    }, { root: null, threshold: 0.2 });
+    channelObs.observe(contactChannels);
+  }
 
   /* ---------- Project item reveal ---------- */
   const itemObs = new IntersectionObserver((entries) => {
