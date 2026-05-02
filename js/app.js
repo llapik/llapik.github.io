@@ -261,15 +261,95 @@
   }, { root: null, threshold: 0.15 });
   document.querySelectorAll('.section-heading').forEach(el => headingObs.observe(el));
 
-  /* ---------- Section wrapper reveal ---------- */
-  const wrapperObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add('section-visible'); wrapperObs.unobserve(e.target); }
+  /* ---------- Scroll-driven scene transitions ---------- */
+  // Replaces IntersectionObserver for main section wrappers.
+  // Each wrapper enters from below and exits upward as you scroll past,
+  // mirroring the reel's per-scene entrance/exit animations.
+  const sceneDefs = [
+    { id: 'about',    sel: '.about-wrapper' },
+    { id: 'projects', sel: '.projects-wrapper' },
+    { id: 'contact',  sel: '.contact-wrapper' },
+  ].map(d => {
+    const sec = document.getElementById(d.id);
+    return { sec, wrapper: sec && sec.querySelector(d.sel.slice(1)) };
+  }).filter(d => d.sec && d.wrapper);
+
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  let sceneRafId = null;
+
+  function updateSceneTransitions() {
+    const vh = window.innerHeight;
+    sceneDefs.forEach(({ sec, wrapper }) => {
+      const rect = sec.getBoundingClientRect();
+      // centerOffset: 0 = section centered in viewport, +1 = one viewport below, -1 = one viewport above
+      const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
+
+      let opacity, ty;
+
+      if (centerOffset > 0.85) {
+        opacity = 0; ty = 55;
+      } else if (centerOffset > 0) {
+        const t = easeOutCubic(clamp01(1 - centerOffset / 0.85));
+        opacity = t;
+        ty = (1 - t) * 55;
+      } else if (centerOffset >= -0.55) {
+        opacity = 1; ty = 0;
+      } else if (centerOffset >= -1.0) {
+        const t = easeOutCubic(clamp01((-centerOffset - 0.55) / 0.45));
+        opacity = 1 - t * 0.65;
+        ty = -t * 28;
+      } else {
+        opacity = 0.35; ty = -28;
+      }
+
+      wrapper.style.opacity = opacity;
+      wrapper.style.transform = ty !== 0 ? `translateY(${ty.toFixed(2)}px)` : 'none';
     });
-  }, { root: null, threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
-  document.querySelectorAll('.about-wrapper, .projects-wrapper, .contact-wrapper').forEach(el => {
-    wrapperObs.observe(el);
-  });
+    sceneRafId = null;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!sceneRafId) sceneRafId = requestAnimationFrame(updateSceneTransitions);
+  }, { passive: true });
+
+  // Run once immediately so sections below fold start hidden
+  updateSceneTransitions();
+
+  /* ---------- Scene number indicator ---------- */
+  const sceneIndicatorNum = document.getElementById('scene-indicator-num');
+  const sceneMap = { hero: '01', about: '02', projects: '03', contact: '04' };
+  let activeSceneId = 'hero';
+
+  function updateSceneIndicator() {
+    const s = window.scrollY + window.innerHeight * 0.35;
+    let newId = 'hero';
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.offsetTop <= s) newId = sec.id;
+    });
+    if (newId !== activeSceneId) {
+      activeSceneId = newId;
+      if (sceneIndicatorNum && sceneMap[newId]) {
+        sceneIndicatorNum.style.opacity = '0';
+        sceneIndicatorNum.style.transform = 'translateY(8px)';
+        setTimeout(() => {
+          sceneIndicatorNum.textContent = sceneMap[newId];
+          sceneIndicatorNum.style.opacity = '';
+          sceneIndicatorNum.style.transform = '';
+        }, 180);
+      }
+    }
+  }
+  window.addEventListener('scroll', updateSceneIndicator, { passive: true });
+
+  /* ---------- Scene dividers draw-in ---------- */
+  const dividerObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); dividerObs.unobserve(e.target); }
+    });
+  }, { root: null, threshold: 0.5 });
+  document.querySelectorAll('.scene-divider').forEach(el => dividerObs.observe(el));
 
   /* ---------- About orb slide-in ---------- */
   const aboutOrb = document.querySelector('.about-orb');
