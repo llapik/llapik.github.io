@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="5jb0Yg-COTRksopQIz3LwpAK6e-7rKLueHUhUNuMO6c" />
@@ -7,7 +7,7 @@
   <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
   <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
   <meta name="author" content="Alexandr Stih">
-  <meta name="theme-color" content="#020b18">
+  <meta name="theme-color" content="#ededea">
   <title>llapik — Портфолио разработчика | Александр Стих</title>
   <link rel="canonical" href="https://llapik.github.io/">
   <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
@@ -42,40 +42,34 @@
   }
   </script>
 
-  <!-- Fonts: Helvetica system stack — no external load needed -->
-
-  <!-- Font Awesome -->
+  <!-- Font Awesome (for project link icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Loading Screen -->
-  <div class="loader" id="loader">
-    <div class="loader-inner">
-      <span class="loader-text">llapik</span>
-      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-      <span class="loader-depth" data-i18n="loader.depth">Погружение...</span>
-    </div>
-  </div>
 
-  <!-- Bubbles Overlay -->
-  <div class="bubbles" id="bubbles" aria-hidden="true"></div>
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
 
-  <!-- Creatures Layer (abstract circle-based sprites) -->
-  <div class="creatures" id="creatures" aria-hidden="true"></div>
+  <!-- Starfield -->
+  <canvas class="starfield" id="starfield" aria-hidden="true"></canvas>
+
+  <!-- Reticle -->
+  <div class="reticle" aria-hidden="true"></div>
 
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
   <div class="cursor-dot" id="cursor-dot"></div>
 
-  <!-- Fluid Background Canvas -->
-  <canvas id="fluid-canvas"></canvas>
-
-  <!-- Depth Indicator -->
-  <div class="depth-indicator" id="depth-indicator" aria-hidden="true">
-    <span class="depth-value">0m</span>
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-text">llapik</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+      <div class="loader-sub">▸ initialising</div>
+    </div>
   </div>
 
   <!-- Content -->
@@ -83,16 +77,14 @@
 
     <!-- Navigation -->
     <nav class="nav" id="nav">
-      <a href="#hero" class="nav-logo">lla<span>pik</span></a>
+      <a href="#hero" class="nav-logo">llapik / portfolio</a>
       <ul class="nav-links" id="nav-links">
         <li><a href="#about" data-i18n="nav.about">О себе</a></li>
         <li><a href="#projects" data-i18n="nav.projects">Проекты</a></li>
         <li><a href="#contact" data-i18n="nav.contact">Контакты</a></li>
       </ul>
       <div class="nav-controls">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-          <i class="fa-solid fa-moon" id="theme-icon"></i>
-        </button>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">dark</button>
         <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
         <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
           <span></span><span></span><span></span>
@@ -100,102 +92,125 @@
       </div>
     </nav>
 
-    <!-- Hero (Surface) -->
-    <section class="hero section-depth" id="hero" data-depth="0">
-      <div class="hero-content">
-        <p class="hero-greeting" data-i18n="hero.greeting">Привет, я</p>
-        <h1 class="hero-name">
-          <span class="hero-name-line" data-scramble>Alexandr</span>
-          <span class="hero-name-line accent-gradient" data-text="Stih" data-scramble>Stih</span>
-        </h1>
-        <p class="hero-tagline" data-i18n="hero.tagline">Создаю цифровые продукты на стыке дизайна, кода и безответственности</p>
-        <a href="#projects" class="hero-cta interactive" data-i18n="hero.cta">Смотреть проекты <span>&rarr;</span></a>
+    <!-- Hero -->
+    <section class="hero" id="hero">
+
+      <!-- Decorative celestial bodies -->
+      <div class="hero-orb" aria-hidden="true">
+        <svg width="540" height="580" viewBox="0 0 540 580" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Orbit ellipse (dashed) -->
+          <ellipse cx="270" cy="290" rx="230" ry="80"
+            stroke="currentColor" stroke-width="0.8" stroke-dasharray="3 8" opacity="0.22"/>
+          <!-- Sun (primary body) -->
+          <circle cx="270" cy="290" r="150" fill="currentColor"/>
+          <!-- Moon orbit group — rotates around sun center -->
+          <g class="hero-moon-orbit" style="transform-origin: 270px 290px">
+            <circle cx="500" cy="290" r="30" fill="currentColor"/>
+          </g>
+          <!-- Far body -->
+          <circle cx="490" cy="88" r="16" fill="currentColor" opacity="0.45"/>
+        </svg>
       </div>
+
+      <div class="hero-content">
+        <span class="hero-greeting" data-i18n="hero.greeting">▸ Привет, я</span>
+        <h1 class="hero-name">
+          <span data-scramble>Alexandr</span>
+          <span data-scramble>Stih.</span>
+        </h1>
+        <p class="hero-tagline" data-i18n="hero.tagline">
+          Создаю цифровые продукты на стыке дизайна, кода и безответственности
+        </p>
+        <a href="#projects" class="hero-cta" data-i18n="hero.cta">
+          Смотреть проекты <span>&rarr;</span>
+        </a>
+      </div>
+
       <div class="hero-scroll-hint">
         <span data-i18n="hero.dive">Погрузиться</span>
         <div class="scroll-line"></div>
       </div>
     </section>
 
-    <!-- Wave Divider 1 -->
-    <div class="wave-divider wave-1">
-      <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path d="M0,160 C180,280 360,80 540,180 C720,280 900,60 1080,160 C1260,260 1380,100 1440,180 L1440,320 L0,320 Z" fill="var(--wave-fill-1)" opacity="0.4"/>
-        <path d="M0,200 C240,300 480,120 720,200 C960,300 1200,100 1440,200 L1440,320 L0,320 Z" fill="var(--wave-fill-1)" opacity="0.6"/>
-        <path d="M0,240 C360,320 720,180 1080,260 C1260,300 1380,220 1440,260 L1440,320 L0,320 Z" fill="var(--wave-fill-1)"/>
-      </svg>
-    </div>
+    <!-- About -->
+    <section class="about" id="about">
 
-    <!-- About (Shallow) -->
-    <section class="about section-depth" id="about" data-depth="50">
+      <!-- Decorative large orb (right side) -->
+      <div class="about-orb" aria-hidden="true">
+        <svg width="500" height="500" viewBox="0 0 500 500" fill="none">
+          <circle cx="250" cy="250" r="248" stroke="currentColor" stroke-width="1"
+            stroke-dasharray="3 8" opacity="0.6"/>
+          <circle cx="250" cy="250" r="200" fill="currentColor" opacity="1"/>
+        </svg>
+      </div>
+
       <div class="about-wrapper">
-        <h2 class="section-title" data-i18n="about.title">О себе</h2>
-        <p class="section-subtitle" data-i18n="about.subtitle">Developer & Creative Thinker</p>
+        <span class="section-label">02 ▸ <span data-i18n="about.sec-label">о себе / about</span></span>
+        <h2 class="section-heading">About<br>the body.</h2>
         <p class="about-text" id="about-text" data-i18n="about.text">
           Я разработчик с фокусом на визуальные впечатления и интересные программные решения. Мне нравится решать сложные задачи путём реализации элегантных цифровых решений, где каждая деталь продумана — от анимации до архитектуры кода. Работаю с современными веб-технологиями, не брезгую нейросетями и всегда ищу способы сделать пользовательский опыт более живым и запоминающимся, а также расширить свой кругозор.
         </p>
         <div class="skills-grid">
-          <div class="skill-tag interactive">JavaScript</div>
-          <div class="skill-tag interactive">C++</div>
-          <div class="skill-tag interactive">C#</div>
-          <div class="skill-tag interactive">Node.js</div>
-          <div class="skill-tag interactive">CSS / SCSS</div>
-          <div class="skill-tag interactive">Python</div>
-          <div class="skill-tag interactive">WebGL</div>
-          <div class="skill-tag interactive">UI / UX</div>
+          <div class="skill-tag">JavaScript</div>
+          <div class="skill-tag">C++</div>
+          <div class="skill-tag">C#</div>
+          <div class="skill-tag">Node.js</div>
+          <div class="skill-tag">CSS / SCSS</div>
+          <div class="skill-tag">Python</div>
+          <div class="skill-tag">WebGL</div>
+          <div class="skill-tag">UI / UX</div>
         </div>
       </div>
     </section>
 
-    <!-- Wave Divider 2 -->
-    <div class="wave-divider wave-2">
-      <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path d="M0,140 C240,60 480,240 720,140 C960,40 1200,220 1440,160 L1440,320 L0,320 Z" fill="var(--wave-fill-2)" opacity="0.35"/>
-        <path d="M0,200 C180,120 540,280 720,200 C900,120 1260,280 1440,220 L1440,320 L0,320 Z" fill="var(--wave-fill-2)" opacity="0.6"/>
-        <path d="M0,260 C360,200 720,300 1080,240 C1260,220 1380,280 1440,260 L1440,320 L0,320 Z" fill="var(--wave-fill-2)"/>
-      </svg>
-    </div>
-
-    <!-- Projects (Mid-depth) -->
-    <section class="projects section-depth" id="projects" data-depth="200">
+    <!-- Projects -->
+    <section class="projects" id="projects">
       <div class="projects-wrapper">
         <div class="projects-header">
-          <h2 class="section-title" data-i18n="projects.title">Проекты</h2>
-          <p class="section-subtitle" data-i18n="projects.subtitle">Избранные работы и эксперименты</p>
+          <span class="section-label">03 ▸ <span data-i18n="projects.sec-label">projects / catalogue</span></span>
+          <h2 class="section-heading">the<br>catalogue</h2>
           <div class="filter-bar" id="filter-bar">
-            <button class="filter-btn active interactive" data-filter="all" data-i18n="projects.all">Все</button>
+            <button class="filter-btn active" data-filter="all" data-i18n="projects.all">Все</button>
           </div>
         </div>
         <div class="projects-list" id="projects-grid">
-          <!-- Rendered by JS as list items -->
+          <!-- Rendered by JS -->
         </div>
       </div>
     </section>
 
-    <!-- Wave Divider 3 -->
-    <div class="wave-divider wave-3">
-      <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path d="M0,120 C360,240 720,60 1080,160 C1260,220 1380,100 1440,140 L1440,320 L0,320 Z" fill="var(--wave-fill-3)" opacity="0.35"/>
-        <path d="M0,180 C240,280 480,100 720,200 C960,280 1200,140 1440,200 L1440,320 L0,320 Z" fill="var(--wave-fill-3)" opacity="0.6"/>
-        <path d="M0,250 C180,300 540,220 720,270 C900,310 1260,230 1440,260 L1440,320 L0,320 Z" fill="var(--wave-fill-3)"/>
-      </svg>
-    </div>
-
-    <!-- Contact (Deep) -->
-    <section class="contact section-depth" id="contact" data-depth="500">
+    <!-- Contact -->
+    <section class="contact" id="contact">
       <div class="contact-wrapper">
-        <h2 class="section-title" data-i18n="contact.title">Контакты</h2>
-        <p class="section-subtitle" data-i18n="contact.subtitle">Открыт для сотрудничества и новых идей</p>
-        <div class="contact-links">
-          <a href="https://github.com/llapik" target="_blank" rel="noopener" class="contact-link interactive">
-            <i class="fa-brands fa-github"></i> GitHub
+        <span class="section-label">04 ▸ <span data-i18n="contact.sec-label">contact / signal</span></span>
+        <h2 class="section-heading">open<br>signal.</h2>
+        <p class="contact-sub" data-i18n="contact.subtitle">
+          Открыт для сотрудничества и новых идей
+        </p>
+
+        <div class="contact-channels">
+
+          <a href="https://github.com/llapik" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="GitHub">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">GitHub</div>
+            <div class="contact-channel-handle">github.com/llapik</div>
           </a>
-          <a href="https://t.me/eayyyyyy" target="_blank" rel="noopener" class="contact-link interactive">
-            <i class="fa-brands fa-telegram"></i> Telegram
+
+          <a href="https://t.me/eayyyyyy" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="Telegram">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Telegram</div>
+            <div class="contact-channel-handle">t.me/eayyyyyy</div>
           </a>
-          <a href="mailto:alex74s00@mail.ru" class="contact-link interactive">
-            <i class="fa-solid fa-envelope"></i> Email
+
+          <a href="mailto:alex74s00@mail.ru"
+             class="contact-channel" aria-label="Email">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Email</div>
+            <div class="contact-channel-handle">alex74s00@mail.ru</div>
           </a>
+
         </div>
       </div>
     </section>
@@ -204,12 +219,10 @@
     <footer class="footer" role="contentinfo">
       <p data-i18n="footer.copy">&copy; 2026 llapik. Все права защищены.</p>
     </footer>
-  </div>
 
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </div><!-- .content -->
+
   <script src="js/i18n.js"></script>
-  <script src="js/fluid.js"></script>
   <script src="js/cursor.js"></script>
   <script src="js/app.js"></script>
 </body>
