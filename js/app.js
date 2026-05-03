@@ -45,13 +45,14 @@
   const starCanvas = document.getElementById('starfield');
   if (starCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const ctx = starCanvas.getContext('2d');
-    let stars = [], orbKeys = null;
+    let stars = [], orbKeys = null, contactCenters = null;
     let W = 0, H = 0;
 
     function initCanvas() {
       W = starCanvas.width = window.innerWidth;
       H = starCanvas.height = window.innerHeight;
       const S = Math.min(W, H);
+      contactCenters = null;
 
       let seed = 1337;
       function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
@@ -61,28 +62,29 @@
         phase: rnd() * Math.PI * 2,
       }));
 
-      // Keyframes per orb: [hero, about, projects, contact]
+      // Keyframes: [hero, about, projects, contact]
+      // Contact positions are fallbacks — DOM alignment takes over when scrolled in
       orbKeys = [
-        // C0 — sun → giant faint about-orb → small planet → signal orb
+        // C0 — sun → vast faint about-orb → small planet → signal orb
         [
           { x: W*0.78, y: H*0.50, r: S*0.220, o: 1.00, ringRx: S*0.340, ringRy: S*0.115 },
           { x: W*0.80, y: H*0.50, r: S*0.340, o: 0.08, ringRx: S*0.400, ringRy: S*0.400 },
-          { x: W*0.78, y: H*0.28, r: S*0.100, o: 0.20, ringRx: 0,       ringRy: 0       },
-          { x: W*0.22, y: H*0.48, r: S*0.085, o: 0.55, ringRx: 0,       ringRy: 0       },
+          { x: W*0.78, y: H*0.28, r: S*0.100, o: 0.20, ringRx: 0, ringRy: 0 },
+          { x: W*0.28, y: H*0.58, r: S*0.065, o: 0.50, ringRx: 0, ringRy: 0 },
         ],
-        // C1 — moon (orbiting in hero) → secondary body
+        // C1 — moon (orbiting hero) → secondary body
         [
           { x: W*0.78+S*0.34, y: H*0.50, r: S*0.044, o: 1.00 },
-          { x: W*0.62,        y: H*0.18, r: S*0.050, o: 0.45 },
-          { x: W*0.62,        y: H*0.65, r: S*0.075, o: 0.20 },
-          { x: W*0.50,        y: H*0.48, r: S*0.080, o: 0.55 },
+          { x: W*0.62, y: H*0.18, r: S*0.050, o: 0.45 },
+          { x: W*0.62, y: H*0.65, r: S*0.075, o: 0.20 },
+          { x: W*0.50, y: H*0.58, r: S*0.065, o: 0.50 },
         ],
-        // C2 — far body → drifting planet → tertiary signal orb
+        // C2 — far body → drifting planet → tertiary orb
         [
           { x: W*0.90, y: H*0.15, r: S*0.024, o: 0.45 },
           { x: W*0.93, y: H*0.82, r: S*0.030, o: 0.20 },
           { x: W*0.15, y: H*0.50, r: S*0.055, o: 0.25 },
-          { x: W*0.80, y: H*0.48, r: S*0.080, o: 0.55 },
+          { x: W*0.72, y: H*0.58, r: S*0.065, o: 0.50 },
         ],
       ];
     }
@@ -103,7 +105,7 @@
     }
 
     function lrp(a, b, t) { return a + (b - a) * t; }
-    function eio(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+    function eio(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
 
     function drawFrame(ts) {
       const t = ts / 1000;
@@ -120,75 +122,107 @@
         ctx.fill();
       });
 
-      if (orbKeys && W > 768) {
-        const sp = getScenePos();
-        const fi = Math.min(Math.floor(sp), 2);
-        const ft = eio(sp - fi);
+      if (!orbKeys || W <= 768) { requestAnimationFrame(drawFrame); return; }
 
-        function interp(frames) {
-          const a = frames[fi], b = frames[fi + 1] || frames[fi];
-          return {
-            x: lrp(a.x, b.x, ft), y: lrp(a.y, b.y, ft),
-            r: lrp(a.r, b.r, ft), o: lrp(a.o, b.o, ft),
-            ringRx: lrp(a.ringRx || 0, b.ringRx || 0, ft),
-            ringRy: lrp(a.ringRy || 0, b.ringRy || 0, ft),
-          };
-        }
+      const sp = getScenePos();
+      const fi = Math.min(Math.floor(sp), 2);
+      const ft = eio(sp - fi);
 
-        const c0 = interp(orbKeys[0]);
-        const c1 = interp(orbKeys[1]);
-        const c2 = interp(orbKeys[2]);
-
-        // Moon orbit — blends from elliptical orbit to independent position
-        const moonBlend = Math.max(0, 1 - sp * 1.5);
-        if (moonBlend > 0) {
-          const S = Math.min(W, H);
-          const angle = t * (Math.PI * 2 / 14);
-          const ox = c0.x + Math.cos(angle) * (S * 0.34);
-          const oy = c0.y + Math.sin(angle) * (S * 0.115);
-          c1.x = lrp(c1.x, ox, moonBlend);
-          c1.y = lrp(c1.y, oy, moonBlend);
-        }
-
-        // Dashed orbit ring around C0
-        if (c0.ringRx > 0.5) {
-          ctx.save();
-          ctx.setLineDash([3, 8]);
-          ctx.strokeStyle = `rgba(${rgb},${(c0.o * 0.22).toFixed(3)})`;
-          ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.ellipse(c0.x, c0.y, c0.ringRx, c0.ringRy, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.restore();
-        }
-
-        // Constellation lines in projects/contact zone
-        const lineFade = Math.max(0, Math.min(1, (sp - 1.6) / 0.7));
-        if (lineFade > 0.01) {
-          ctx.save();
-          ctx.setLineDash([3, 12]);
-          ctx.lineWidth = 0.6;
-          [[c0, c1], [c1, c2], [c0, c2]].forEach(([a, b]) => {
-            ctx.strokeStyle = `rgba(${rgb},${(Math.min(a.o, b.o) * 0.28 * lineFade).toFixed(3)})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          });
-          ctx.setLineDash([]);
-          ctx.restore();
-        }
-
-        // Draw orbs (back to front)
-        [c2, c1, c0].forEach(orb => {
-          if (orb.o < 0.005 || orb.r < 0.5) return;
-          ctx.beginPath();
-          ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},${orb.o.toFixed(3)})`;
-          ctx.fill();
-        });
+      function interp(frames) {
+        const a = frames[fi], b = frames[fi + 1] || frames[fi];
+        return {
+          x: lrp(a.x, b.x, ft), y: lrp(a.y, b.y, ft),
+          r: lrp(a.r, b.r, ft), o: lrp(a.o, b.o, ft),
+          ringRx: lrp(a.ringRx || 0, b.ringRx || 0, ft),
+          ringRy: lrp(a.ringRy || 0, b.ringRy || 0, ft),
+        };
       }
+
+      const c0 = interp(orbKeys[0]);
+      const c1 = interp(orbKeys[1]);
+      const c2 = interp(orbKeys[2]);
+
+      // Moon orbit — elliptical in hero, breaks free toward about
+      const moonBlend = Math.max(0, 1 - sp * 1.5);
+      if (moonBlend > 0) {
+        const S = Math.min(W, H);
+        const angle = t * (Math.PI * 2 / 14);
+        const ox = c0.x + Math.cos(angle) * (S * 0.34);
+        const oy = c0.y + Math.sin(angle) * (S * 0.115);
+        c1.x = lrp(c1.x, ox, moonBlend);
+        c1.y = lrp(c1.y, oy, moonBlend);
+      }
+
+      // Align orbs to contact channel DOM positions — orbs drift toward each card
+      const contactBlend = Math.max(0, Math.min(1, (sp - 2.0) / 0.9));
+      if (contactBlend > 0) {
+        // Read live positions each frame so orbs follow channel entry animation
+        const chs = document.querySelectorAll('.contact-channel');
+        if (chs.length >= 3) {
+          const pos = Array.from(chs).map(ch => {
+            const r = ch.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height * 0.38 };
+          });
+          [c0, c1, c2].forEach((c, i) => {
+            c.x = lrp(c.x, pos[i].x, contactBlend);
+            c.y = lrp(c.y, pos[i].y, contactBlend);
+          });
+        }
+      }
+
+      // Dashed orbit ring around C0
+      if (c0.ringRx > 0.5) {
+        ctx.save();
+        ctx.setLineDash([3, 8]);
+        ctx.strokeStyle = `rgba(${rgb},${(c0.o * 0.22).toFixed(3)})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(c0.x, c0.y, c0.ringRx, c0.ringRy, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Constellation lines in projects/contact zone
+      const lineFade = Math.max(0, Math.min(1, (sp - 1.6) / 0.7));
+      if (lineFade > 0.01) {
+        ctx.save();
+        ctx.setLineDash([3, 12]);
+        ctx.lineWidth = 0.6;
+        [[c0, c1], [c1, c2], [c0, c2]].forEach(([a, b]) => {
+          ctx.strokeStyle = `rgba(${rgb},${(Math.min(a.o, b.o) * 0.28 * lineFade).toFixed(3)})`;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        });
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Draw each orb: soft atmospheric corona + solid core
+      function drawOrb(orb) {
+        if (orb.o < 0.005 || orb.r < 0.5) return;
+        const S = Math.min(W, H);
+        // Glow halo — radius 3.5× the core, very faint
+        const gr = orb.r * 3.5;
+        const ga = Math.max(orb.o * 0.12, Math.min(orb.r / S * 0.5, 0.065));
+        const grd = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, gr);
+        grd.addColorStop(0,    `rgba(${rgb},${ga.toFixed(3)})`);
+        grd.addColorStop(0.45, `rgba(${rgb},${(ga * 0.25).toFixed(3)})`);
+        grd.addColorStop(1,    `rgba(${rgb},0)`);
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, gr, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+        // Solid core
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${rgb},${orb.o.toFixed(3)})`;
+        ctx.fill();
+      }
+
+      [c2, c1, c0].forEach(drawOrb);
 
       requestAnimationFrame(drawFrame);
     }
