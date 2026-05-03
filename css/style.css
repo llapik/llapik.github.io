@@ -326,25 +326,6 @@ section {
 .hero-cta span { transition: transform 0.3s var(--spring); }
 .hero-cta:hover span { transform: translateX(5px); }
 
-/* Hero decorative orb — parallax via CSS custom property */
-.hero-orb {
-  position: absolute; right: -4vw; top: 50%;
-  transform: translateY(calc(-50% + var(--orb-parallax, 0px)));
-  pointer-events: none; z-index: 1;
-  color: var(--ink);
-  opacity: 0; animation: orbFadeIn 1.4s 0.8s var(--expo) forwards;
-}
-@keyframes orbFadeIn { to { opacity: 1; } }
-
-/* Moon orbit animation */
-.hero-moon-orbit {
-  animation: moonOrbit 14s linear infinite;
-}
-@keyframes moonOrbit {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
 /* Hero scroll hint */
 .hero-scroll-hint {
   position: absolute; bottom: 2.5rem; left: 3rem;
@@ -450,19 +431,6 @@ section {
   transform: translate(0px, 0px) scale(1);
 }
 .skill-tag:hover { color: var(--ink); border-color: var(--ink); transform: translateY(-2px) !important; }
-
-/* About decorative orb — slides in from right on scroll */
-.about-orb {
-  position: absolute; right: -8vw; top: 50%;
-  transform: translateY(-50%) translateX(10vw);
-  pointer-events: none; z-index: 1;
-  color: var(--ink); opacity: 0;
-  transition: opacity 1.4s var(--expo), transform 1.4s var(--expo);
-}
-.about-orb.visible {
-  opacity: 0.08;
-  transform: translateY(-50%) translateX(0);
-}
 
 /* ===== Projects ===== */
 .projects { flex-direction: column; justify-content: center; }
@@ -606,11 +574,6 @@ section {
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 900px) {
-  .hero-orb { display: none; }
-  .about-orb { display: none; }
-}
-
 @media (max-width: 768px) {
   body { cursor: auto; }
   .cursor, .cursor-dot { display: none !important; }
@@ -665,7 +628,6 @@ section {
   .skill-tag { opacity: 1 !important; transform: none !important; }
   .about-wrapper, .projects-wrapper, .contact-wrapper { opacity: 1 !important; transform: none !important; }
   .contact-channel { opacity: 1 !important; transform: none !important; }
-  .about-orb { opacity: 0.08 !important; transform: translateY(-50%) !important; }
   .scene-divider-line::after { left: 0 !important; }
   .scene-divider-label { opacity: 1 !important; transform: none !important; }
 }
