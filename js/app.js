@@ -41,47 +41,161 @@
   }
   window.addEventListener('scroll', updateProgress, { passive: true });
 
-  /* ---------- Starfield ---------- */
+  /* ---------- Starfield + Scroll-driven Background Orbs ---------- */
   const starCanvas = document.getElementById('starfield');
   if (starCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const ctx = starCanvas.getContext('2d');
-    let stars = [];
+    let stars = [], orbKeys = null;
+    let W = 0, H = 0;
 
-    function initStars() {
-      starCanvas.width = window.innerWidth;
-      starCanvas.height = window.innerHeight;
+    function initCanvas() {
+      W = starCanvas.width = window.innerWidth;
+      H = starCanvas.height = window.innerHeight;
+      const S = Math.min(W, H);
+
       let seed = 1337;
       function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
-      stars = [];
-      for (let i = 0; i < 55; i++) {
-        stars.push({
-          x: rnd() * starCanvas.width,
-          y: rnd() * starCanvas.height,
-          r: rnd() * 1.4 + 0.3,
-          o: rnd() * 0.35 + 0.08,
-          phase: rnd() * Math.PI * 2,
-        });
-      }
+      stars = Array.from({ length: 55 }, () => ({
+        x: rnd() * W, y: rnd() * H,
+        r: rnd() * 1.4 + 0.3, o: rnd() * 0.35 + 0.08,
+        phase: rnd() * Math.PI * 2,
+      }));
+
+      // Keyframes per orb: [hero, about, projects, contact]
+      orbKeys = [
+        // C0 — sun → giant faint about-orb → small planet → signal orb
+        [
+          { x: W*0.78, y: H*0.50, r: S*0.220, o: 1.00, ringRx: S*0.340, ringRy: S*0.115 },
+          { x: W*0.80, y: H*0.50, r: S*0.340, o: 0.08, ringRx: S*0.400, ringRy: S*0.400 },
+          { x: W*0.78, y: H*0.28, r: S*0.100, o: 0.20, ringRx: 0,       ringRy: 0       },
+          { x: W*0.22, y: H*0.48, r: S*0.085, o: 0.55, ringRx: 0,       ringRy: 0       },
+        ],
+        // C1 — moon (orbiting in hero) → secondary body
+        [
+          { x: W*0.78+S*0.34, y: H*0.50, r: S*0.044, o: 1.00 },
+          { x: W*0.62,        y: H*0.18, r: S*0.050, o: 0.45 },
+          { x: W*0.62,        y: H*0.65, r: S*0.075, o: 0.20 },
+          { x: W*0.50,        y: H*0.48, r: S*0.080, o: 0.55 },
+        ],
+        // C2 — far body → drifting planet → tertiary signal orb
+        [
+          { x: W*0.90, y: H*0.15, r: S*0.024, o: 0.45 },
+          { x: W*0.93, y: H*0.82, r: S*0.030, o: 0.20 },
+          { x: W*0.15, y: H*0.50, r: S*0.055, o: 0.25 },
+          { x: W*0.80, y: H*0.48, r: S*0.080, o: 0.55 },
+        ],
+      ];
     }
 
-    function drawStars(ts) {
+    function getScenePos() {
+      const ids = ['hero', 'about', 'projects', 'contact'];
+      const secs = ids.map(id => document.getElementById(id));
+      const mid = window.scrollY + H * 0.5;
+      for (let i = secs.length - 1; i >= 0; i--) {
+        if (!secs[i]) continue;
+        const next = secs[i + 1];
+        const bottom = next ? next.offsetTop : document.body.scrollHeight;
+        if (mid >= secs[i].offsetTop) {
+          return Math.min(i + Math.min((mid - secs[i].offsetTop) / Math.max(1, bottom - secs[i].offsetTop), 1), 3);
+        }
+      }
+      return 0;
+    }
+
+    function lrp(a, b, t) { return a + (b - a) * t; }
+    function eio(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+
+    function drawFrame(ts) {
       const t = ts / 1000;
-      ctx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+      ctx.clearRect(0, 0, W, H);
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const rgb = isDark ? '237,237,234' : '10,10,10';
+
+      // Stars
       stars.forEach(s => {
-        const alpha = s.o * (0.55 + 0.45 * Math.sin(t * 0.7 + s.phase));
+        const a = s.o * (0.55 + 0.45 * Math.sin(t * 0.7 + s.phase));
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${rgb},${alpha})`;
+        ctx.fillStyle = `rgba(${rgb},${a.toFixed(3)})`;
         ctx.fill();
       });
-      requestAnimationFrame(drawStars);
+
+      if (orbKeys && W > 768) {
+        const sp = getScenePos();
+        const fi = Math.min(Math.floor(sp), 2);
+        const ft = eio(sp - fi);
+
+        function interp(frames) {
+          const a = frames[fi], b = frames[fi + 1] || frames[fi];
+          return {
+            x: lrp(a.x, b.x, ft), y: lrp(a.y, b.y, ft),
+            r: lrp(a.r, b.r, ft), o: lrp(a.o, b.o, ft),
+            ringRx: lrp(a.ringRx || 0, b.ringRx || 0, ft),
+            ringRy: lrp(a.ringRy || 0, b.ringRy || 0, ft),
+          };
+        }
+
+        const c0 = interp(orbKeys[0]);
+        const c1 = interp(orbKeys[1]);
+        const c2 = interp(orbKeys[2]);
+
+        // Moon orbit — blends from elliptical orbit to independent position
+        const moonBlend = Math.max(0, 1 - sp * 1.5);
+        if (moonBlend > 0) {
+          const S = Math.min(W, H);
+          const angle = t * (Math.PI * 2 / 14);
+          const ox = c0.x + Math.cos(angle) * (S * 0.34);
+          const oy = c0.y + Math.sin(angle) * (S * 0.115);
+          c1.x = lrp(c1.x, ox, moonBlend);
+          c1.y = lrp(c1.y, oy, moonBlend);
+        }
+
+        // Dashed orbit ring around C0
+        if (c0.ringRx > 0.5) {
+          ctx.save();
+          ctx.setLineDash([3, 8]);
+          ctx.strokeStyle = `rgba(${rgb},${(c0.o * 0.22).toFixed(3)})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.ellipse(c0.x, c0.y, c0.ringRx, c0.ringRy, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        // Constellation lines in projects/contact zone
+        const lineFade = Math.max(0, Math.min(1, (sp - 1.6) / 0.7));
+        if (lineFade > 0.01) {
+          ctx.save();
+          ctx.setLineDash([3, 12]);
+          ctx.lineWidth = 0.6;
+          [[c0, c1], [c1, c2], [c0, c2]].forEach(([a, b]) => {
+            ctx.strokeStyle = `rgba(${rgb},${(Math.min(a.o, b.o) * 0.28 * lineFade).toFixed(3)})`;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          });
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        // Draw orbs (back to front)
+        [c2, c1, c0].forEach(orb => {
+          if (orb.o < 0.005 || orb.r < 0.5) return;
+          ctx.beginPath();
+          ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},${orb.o.toFixed(3)})`;
+          ctx.fill();
+        });
+      }
+
+      requestAnimationFrame(drawFrame);
     }
 
-    initStars();
-    window.addEventListener('resize', initStars, { passive: true });
-    requestAnimationFrame(drawStars);
+    initCanvas();
+    window.addEventListener('resize', initCanvas, { passive: true });
+    requestAnimationFrame(drawFrame);
   }
 
   /* ---------- Loader ---------- */
@@ -173,7 +287,6 @@
 
   /* ---------- Hero Parallax ---------- */
   const heroContent = document.querySelector('.hero-content');
-  const heroOrb = document.querySelector('.hero-orb');
   let heroTargetY = 0, heroCurrentY = 0, heroTargetO = 1, heroCurrentO = 1, heroRaf = false;
 
   function lerpHero() {
@@ -201,10 +314,6 @@
       if (!heroRaf) { heroRaf = true; requestAnimationFrame(lerpHero); }
     }
 
-    // Hero orb slower parallax
-    if (heroOrb) {
-      heroOrb.style.setProperty('--orb-parallax', (s * 0.1) + 'px');
-    }
   }, { passive: true });
 
   /* ---------- Navigation ---------- */
@@ -261,26 +370,95 @@
   }, { root: null, threshold: 0.15 });
   document.querySelectorAll('.section-heading').forEach(el => headingObs.observe(el));
 
-  /* ---------- Section wrapper reveal ---------- */
-  const wrapperObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add('section-visible'); wrapperObs.unobserve(e.target); }
-    });
-  }, { root: null, threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
-  document.querySelectorAll('.about-wrapper, .projects-wrapper, .contact-wrapper').forEach(el => {
-    wrapperObs.observe(el);
-  });
+  /* ---------- Scroll-driven scene transitions ---------- */
+  // Replaces IntersectionObserver for main section wrappers.
+  // Each wrapper enters from below and exits upward as you scroll past,
+  // mirroring the reel's per-scene entrance/exit animations.
+  const sceneDefs = [
+    { id: 'about',    sel: '.about-wrapper' },
+    { id: 'projects', sel: '.projects-wrapper' },
+    { id: 'contact',  sel: '.contact-wrapper' },
+  ].map(d => {
+    const sec = document.getElementById(d.id);
+    return { sec, wrapper: sec && sec.querySelector(d.sel.slice(1)) };
+  }).filter(d => d.sec && d.wrapper);
 
-  /* ---------- About orb slide-in ---------- */
-  const aboutOrb = document.querySelector('.about-orb');
-  if (aboutOrb) {
-    const orbObs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) { aboutOrb.classList.add('visible'); orbObs.unobserve(e.target); }
-      });
-    }, { root: null, threshold: 0.1 });
-    orbObs.observe(document.getElementById('about'));
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  let sceneRafId = null;
+
+  function updateSceneTransitions() {
+    const vh = window.innerHeight;
+    sceneDefs.forEach(({ sec, wrapper }) => {
+      const rect = sec.getBoundingClientRect();
+      // centerOffset: 0 = section centered in viewport, +1 = one viewport below, -1 = one viewport above
+      const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
+
+      let opacity, ty;
+
+      if (centerOffset > 0.85) {
+        opacity = 0; ty = 55;
+      } else if (centerOffset > 0) {
+        const t = easeOutCubic(clamp01(1 - centerOffset / 0.85));
+        opacity = t;
+        ty = (1 - t) * 55;
+      } else if (centerOffset >= -0.55) {
+        opacity = 1; ty = 0;
+      } else if (centerOffset >= -1.0) {
+        const t = easeOutCubic(clamp01((-centerOffset - 0.55) / 0.45));
+        opacity = 1 - t * 0.65;
+        ty = -t * 28;
+      } else {
+        opacity = 0.35; ty = -28;
+      }
+
+      wrapper.style.opacity = opacity;
+      wrapper.style.transform = ty !== 0 ? `translateY(${ty.toFixed(2)}px)` : 'none';
+    });
+    sceneRafId = null;
   }
+
+  window.addEventListener('scroll', () => {
+    if (!sceneRafId) sceneRafId = requestAnimationFrame(updateSceneTransitions);
+  }, { passive: true });
+
+  // Run once immediately so sections below fold start hidden
+  updateSceneTransitions();
+
+  /* ---------- Scene number indicator ---------- */
+  const sceneIndicatorNum = document.getElementById('scene-indicator-num');
+  const sceneMap = { hero: '01', about: '02', projects: '03', contact: '04' };
+  let activeSceneId = 'hero';
+
+  function updateSceneIndicator() {
+    const s = window.scrollY + window.innerHeight * 0.35;
+    let newId = 'hero';
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.offsetTop <= s) newId = sec.id;
+    });
+    if (newId !== activeSceneId) {
+      activeSceneId = newId;
+      if (sceneIndicatorNum && sceneMap[newId]) {
+        sceneIndicatorNum.style.opacity = '0';
+        sceneIndicatorNum.style.transform = 'translateY(8px)';
+        setTimeout(() => {
+          sceneIndicatorNum.textContent = sceneMap[newId];
+          sceneIndicatorNum.style.opacity = '';
+          sceneIndicatorNum.style.transform = '';
+        }, 180);
+      }
+    }
+  }
+  window.addEventListener('scroll', updateSceneIndicator, { passive: true });
+
+  /* ---------- Scene dividers draw-in ---------- */
+  const dividerObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); dividerObs.unobserve(e.target); }
+    });
+  }, { root: null, threshold: 0.5 });
+  document.querySelectorAll('.scene-divider').forEach(el => dividerObs.observe(el));
 
   /* ---------- Word reveal on about text ---------- */
   const aboutText = document.getElementById('about-text');
