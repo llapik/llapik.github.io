@@ -468,10 +468,26 @@ section {
 .project-item:first-child { border-top: 1px solid var(--border); }
 .project-item:hover { background: var(--glass-bg); }
 
+/* Cursor-tracking spotlight on hover */
+.project-item::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%),
+              var(--glass-bg), transparent 60%);
+  opacity: 0; pointer-events: none; z-index: 0;
+  transition: opacity 0.4s ease;
+}
+.project-item:hover::before { opacity: 1; }
+.project-item > * { position: relative; z-index: 1; }
+
 .project-item-number {
   font-family: var(--font-mono); font-size: 1.5rem; font-weight: 400;
   color: var(--dim); text-align: center; line-height: 1;
   letter-spacing: -0.03em;
+  transition: color 0.35s ease, transform 0.45s var(--spring);
+}
+.project-item:hover .project-item-number {
+  color: var(--ink); transform: scale(1.12);
 }
 
 .project-item-content { min-width: 0; }

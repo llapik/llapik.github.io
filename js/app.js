@@ -45,14 +45,19 @@
   const starCanvas = document.getElementById('starfield');
   if (starCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const ctx = starCanvas.getContext('2d');
-    let stars = [], orbKeys = null, contactCenters = null;
+    let stars = [], orbKeys = null;
     let W = 0, H = 0;
+    // Smoothed mouse offset (-1..1 from viewport center) for orb parallax
+    let pmx = 0, pmy = 0, tmx = 0, tmy = 0;
+    window.addEventListener('mousemove', (e) => {
+      tmx = (e.clientX / window.innerWidth - 0.5) * 2;
+      tmy = (e.clientY / window.innerHeight - 0.5) * 2;
+    }, { passive: true });
 
     function initCanvas() {
       W = starCanvas.width = window.innerWidth;
       H = starCanvas.height = window.innerHeight;
       const S = Math.min(W, H);
-      contactCenters = null;
 
       let seed = 1337;
       function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
@@ -153,19 +158,35 @@
         c1.y = lrp(c1.y, oy, moonBlend);
       }
 
-      // Align orbs to contact channel DOM positions — orbs drift toward each card
-      const contactBlend = Math.max(0, Math.min(1, (sp - 2.0) / 0.9));
+      // Contact alignment strength — based on the contact section's own position
+      // so it reliably reaches 1 even though it is the last (short) section.
+      let contactBlend = 0;
+      const contactSec = document.getElementById('contact');
+      if (contactSec) {
+        const cr = contactSec.getBoundingClientRect();
+        contactBlend = Math.max(0, Math.min(1, (H * 0.9 - cr.top) / (H * 0.6)));
+      }
+
+      // Mouse parallax — orbs drift with the cursor for depth (faded out in contact)
+      pmx += (tmx - pmx) * 0.05;
+      pmy += (tmy - pmy) * 0.05;
+      const par = 1 - contactBlend;
+      [c0, c1, c2].forEach((c, i) => {
+        const depth = 6 + i * 8;
+        c.x += pmx * depth * par;
+        c.y += pmy * depth * par;
+      });
+
+      // Align orbs precisely behind each contact channel orb
       if (contactBlend > 0) {
         // Read live positions each frame so orbs follow channel entry animation
-        const chs = document.querySelectorAll('.contact-channel');
-        if (chs.length >= 3) {
-          const pos = Array.from(chs).map(ch => {
-            const r = ch.getBoundingClientRect();
-            return { x: r.left + r.width / 2, y: r.top + r.height * 0.38 };
-          });
+        const dots = document.querySelectorAll('.contact-channel-orb');
+        if (dots.length >= 3) {
           [c0, c1, c2].forEach((c, i) => {
-            c.x = lrp(c.x, pos[i].x, contactBlend);
-            c.y = lrp(c.y, pos[i].y, contactBlend);
+            if (!dots[i]) return;
+            const r = dots[i].getBoundingClientRect();
+            c.x = lrp(c.x, r.left + r.width / 2, contactBlend);
+            c.y = lrp(c.y, r.top + r.height / 2, contactBlend);
           });
         }
       }
@@ -578,6 +599,17 @@
   const filterBar = document.getElementById('filter-bar');
   let allProjects = [];
   let allTechs = new Set();
+
+  // Cursor-tracking spotlight position for hovered project rows
+  if (projectsGrid) {
+    projectsGrid.addEventListener('mousemove', (e) => {
+      const item = e.target.closest('.project-item');
+      if (!item) return;
+      const r = item.getBoundingClientRect();
+      item.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      item.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    }, { passive: true });
+  }
 
   async function loadProjects() {
     try {
