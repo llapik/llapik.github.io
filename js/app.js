@@ -221,6 +221,67 @@
         ctx.restore();
       }
 
+      // Orbiting tech-tag spheres — appear in projects zone, right side of canvas
+      const techAlpha = Math.max(0, Math.min(1,
+        sp < 1.3 ? (sp - 1.0) / 0.3 :
+        sp < 2.1 ? 1 :
+        (2.5 - sp) / 0.4));
+
+      if (techAlpha > 0.01 && allTechs && allTechs.size > 0) {
+        const techs = [...allTechs];
+        const cx = W * 0.83, cy = H * 0.55;
+        const activeTech = filterBar && filterBar.querySelector('.filter-btn.active')
+          ? filterBar.querySelector('.filter-btn.active').dataset.filter : 'all';
+
+        ctx.save();
+        ctx.beginPath(); ctx.rect(W * 0.5, 0, W * 0.5, H); ctx.clip();
+
+        // Orbit ellipses first (very faint dashed rings)
+        techs.forEach((_, i) => {
+          const rx = 58 + (i % 5) * 30, ry = rx * 0.38;
+          ctx.save();
+          ctx.setLineDash([2, 10]);
+          ctx.strokeStyle = `rgba(${rgb},${(0.07 * techAlpha).toFixed(3)})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.textBaseline = 'middle';
+
+        techs.forEach((tech, i) => {
+          const isActive = tech === activeTech;
+          const rx = 58 + (i % 5) * 30, ry = rx * 0.38;
+          const speed = 0.11 + (i % 4) * 0.04;
+          const phase = i * 137.5 * Math.PI / 180; // golden angle
+          const angle = t * speed + phase;
+          const sx = cx + Math.cos(angle) * rx;
+          const sy = cy + Math.sin(angle) * ry;
+          const r  = isActive ? 5.5 : 3.5;
+          const a  = (isActive ? 0.80 : 0.38) * techAlpha;
+
+          // Glow halo
+          const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 5);
+          g.addColorStop(0, `rgba(${rgb},${(a * 0.28).toFixed(3)})`);
+          g.addColorStop(1, `rgba(${rgb},0)`);
+          ctx.beginPath(); ctx.arc(sx, sy, r * 5, 0, Math.PI * 2);
+          ctx.fillStyle = g; ctx.fill();
+
+          // Core
+          ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},${a.toFixed(3)})`; ctx.fill();
+
+          // Label
+          ctx.fillStyle = `rgba(${rgb},${(a * 0.75).toFixed(3)})`;
+          ctx.fillText(tech, sx + r + 4, sy);
+        });
+
+        ctx.restore();
+      }
+
       // Draw each orb: soft atmospheric corona + solid core
       function drawOrb(orb) {
         if (orb.o < 0.005 || orb.r < 0.5) return;
@@ -700,23 +761,41 @@
     }
   });
 
-  /* ---------- Smooth Scroll ---------- */
+  /* ---------- Smooth Scroll Inertia (wheel-driven, desktop) ---------- */
+  const _rm  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const _touch = 'ontouchstart' in window && navigator.maxTouchPoints > 0;
+  const useInertia = !_touch && !_rm;
+  let scrollTarget = window.scrollY;
+
+  if (useInertia) {
+    let sc = window.scrollY;
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scrollTarget = Math.max(0, Math.min(
+        document.documentElement.scrollHeight - window.innerHeight,
+        scrollTarget + e.deltaY));
+    }, { passive: false });
+
+    (function rafScroll() {
+      const d = scrollTarget - sc;
+      if (Math.abs(d) > 0.3) {
+        sc += d * 0.1;
+        window.scrollTo(0, sc);
+      } else {
+        // Settled — re-sync with native scroll so keyboard/touch still work
+        sc = scrollTarget = window.scrollY;
+      }
+      requestAnimationFrame(rafScroll);
+    })();
+  }
+
   function smoothScrollTo(targetEl) {
     const navH = nav ? nav.offsetHeight : 0;
-    const targetY = targetEl.getBoundingClientRect().top + window.scrollY - navH;
-    const startY = window.scrollY;
-    const diff = targetY - startY;
-    const duration = Math.min(1200, Math.max(600, Math.abs(diff) * 0.5));
-    let start = null;
-    function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
-    function step(ts) {
-      if (!start) start = ts;
-      const elapsed = ts - start;
-      const progress = Math.min(elapsed / duration, 1);
-      window.scrollTo(0, startY + diff * easeOutExpo(progress));
-      if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
+    const y = Math.max(0, Math.min(
+      document.documentElement.scrollHeight - window.innerHeight,
+      targetEl.getBoundingClientRect().top + window.scrollY - navH));
+    if (!useInertia) { window.scrollTo({ top: y, behavior: 'smooth' }); return; }
+    scrollTarget = y;
   }
 
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {

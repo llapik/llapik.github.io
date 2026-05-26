@@ -440,15 +440,40 @@ section {
 }
 .projects-header { margin-bottom: 3rem; }
 
-.filter-bar { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2rem; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 2rem; align-items: center; }
+
+@keyframes filterFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-5px) scale(1.025); }
+}
+
 .filter-btn {
   font-family: var(--font-mono); font-size: 0.62rem;
   color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase;
-  border: 1px solid var(--border); padding: 0.35rem 0.9rem;
-  background: none; cursor: pointer;
-  transition: color 0.3s ease, border-color 0.3s ease;
+  border: 1px solid var(--border); padding: 0.38rem 1rem;
+  background: none; cursor: pointer; border-radius: 2em;
+  transition: color 0.3s ease, border-color 0.3s ease,
+              background 0.3s ease, box-shadow 0.3s ease;
+  animation: filterFloat 3.6s ease-in-out infinite;
 }
-.filter-btn:hover, .filter-btn.active { color: var(--ink); border-color: var(--ink); }
+.filter-btn:nth-child(1)  { animation-delay: 0.00s; }
+.filter-btn:nth-child(2)  { animation-delay: 0.28s; }
+.filter-btn:nth-child(3)  { animation-delay: 0.56s; }
+.filter-btn:nth-child(4)  { animation-delay: 0.84s; }
+.filter-btn:nth-child(5)  { animation-delay: 1.12s; }
+.filter-btn:nth-child(6)  { animation-delay: 1.40s; }
+.filter-btn:nth-child(7)  { animation-delay: 1.68s; }
+.filter-btn:nth-child(8)  { animation-delay: 0.14s; }
+.filter-btn:nth-child(9)  { animation-delay: 0.42s; }
+.filter-btn:nth-child(10) { animation-delay: 0.70s; }
+.filter-btn:hover {
+  color: var(--ink); border-color: var(--ink);
+  animation-play-state: paused;
+}
+.filter-btn.active {
+  color: var(--bg); background: var(--ink); border-color: var(--ink);
+  animation-play-state: paused;
+}
 
 /* Project list */
 .projects-list { display: flex; flex-direction: column; }
@@ -644,6 +669,7 @@ section {
   .skill-tag { opacity: 1 !important; transform: none !important; }
   .about-wrapper, .projects-wrapper, .contact-wrapper { opacity: 1 !important; transform: none !important; }
   .contact-channel { opacity: 1 !important; transform: none !important; }
+  .filter-btn { animation: none !important; }
   .scene-divider-line::after { left: 0 !important; }
   .scene-divider-label { opacity: 1 !important; transform: none !important; }
 }
