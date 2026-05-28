@@ -221,62 +221,78 @@
         ctx.restore();
       }
 
-      // Orbiting tech-tag spheres — appear in projects zone, right side of canvas
+      // Orbiting tech-tag spheres — appear throughout projects zone
       const techAlpha = Math.max(0, Math.min(1,
-        sp < 1.3 ? (sp - 1.0) / 0.3 :
-        sp < 2.1 ? 1 :
-        (2.5 - sp) / 0.4));
+        sp < 1.4 ? (sp - 1.1) / 0.3 :
+        sp < 2.75 ? 1 :
+        (3.0 - sp) / 0.25));
 
       if (techAlpha > 0.01 && allTechs && allTechs.size > 0) {
         const techs = [...allTechs];
-        const cx = W * 0.83, cy = H * 0.55;
-        const activeTech = filterBar && filterBar.querySelector('.filter-btn.active')
-          ? filterBar.querySelector('.filter-btn.active').dataset.filter : 'all';
+
+        // Center: right of projects content, derived from DOM so it adapts to screen width
+        let cx = W * 0.84, cy = H * 0.5;
+        if (projectsGrid) {
+          const pr = projectsGrid.getBoundingClientRect();
+          const rightEdge = pr.right + 16;
+          const avail = W - rightEdge;
+          if (avail > 80) {
+            cx = rightEdge + avail * 0.42;
+            cy = Math.max(H * 0.22, Math.min(H * 0.78, pr.top + pr.height * 0.48));
+          }
+        }
+        const maxRx = Math.min(165, (W - cx) * 0.88);
+        if (maxRx < 30) { requestAnimationFrame(drawFrame); return; }
+
+        const activeTech = filterBar
+          ? (filterBar.querySelector('.filter-btn.active') || { dataset: { filter: 'all' } }).dataset.filter
+          : 'all';
 
         ctx.save();
-        ctx.beginPath(); ctx.rect(W * 0.5, 0, W * 0.5, H); ctx.clip();
+        ctx.beginPath(); ctx.rect(cx - maxRx - 30, 0, W, H); ctx.clip();
 
-        // Orbit ellipses first (very faint dashed rings)
+        // Orbit ellipses — dashed rings behind spheres
         techs.forEach((_, i) => {
-          const rx = 58 + (i % 5) * 30, ry = rx * 0.38;
+          const rx = maxRx * (0.28 + (i % 5) * 0.155), ry = rx * 0.40;
           ctx.save();
-          ctx.setLineDash([2, 10]);
-          ctx.strokeStyle = `rgba(${rgb},${(0.07 * techAlpha).toFixed(3)})`;
-          ctx.lineWidth = 0.5;
+          ctx.setLineDash([2, 9]);
+          ctx.strokeStyle = `rgba(${rgb},${(0.10 * techAlpha).toFixed(3)})`;
+          ctx.lineWidth = 0.6;
           ctx.beginPath();
           ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         });
 
-        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.font = '10px JetBrains Mono, monospace';
         ctx.textBaseline = 'middle';
 
         techs.forEach((tech, i) => {
           const isActive = tech === activeTech;
-          const rx = 58 + (i % 5) * 30, ry = rx * 0.38;
-          const speed = 0.11 + (i % 4) * 0.04;
-          const phase = i * 137.5 * Math.PI / 180; // golden angle
+          const rx = maxRx * (0.28 + (i % 5) * 0.155), ry = rx * 0.40;
+          const speed = 0.10 + (i % 4) * 0.04;
+          const phase = i * 137.5 * Math.PI / 180;
           const angle = t * speed + phase;
           const sx = cx + Math.cos(angle) * rx;
           const sy = cy + Math.sin(angle) * ry;
-          const r  = isActive ? 5.5 : 3.5;
-          const a  = (isActive ? 0.80 : 0.38) * techAlpha;
+          const r = isActive ? 7 : 4.5;
+          const a = (isActive ? 0.92 : 0.60) * techAlpha;
 
           // Glow halo
-          const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 5);
-          g.addColorStop(0, `rgba(${rgb},${(a * 0.28).toFixed(3)})`);
-          g.addColorStop(1, `rgba(${rgb},0)`);
-          ctx.beginPath(); ctx.arc(sx, sy, r * 5, 0, Math.PI * 2);
+          const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 4.5);
+          g.addColorStop(0,   `rgba(${rgb},${(a * 0.32).toFixed(3)})`);
+          g.addColorStop(0.5, `rgba(${rgb},${(a * 0.10).toFixed(3)})`);
+          g.addColorStop(1,   `rgba(${rgb},0)`);
+          ctx.beginPath(); ctx.arc(sx, sy, r * 4.5, 0, Math.PI * 2);
           ctx.fillStyle = g; ctx.fill();
 
-          // Core
+          // Core sphere
           ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(${rgb},${a.toFixed(3)})`; ctx.fill();
 
-          // Label
-          ctx.fillStyle = `rgba(${rgb},${(a * 0.75).toFixed(3)})`;
-          ctx.fillText(tech, sx + r + 4, sy);
+          // Label (offset by sphere radius + small gap)
+          ctx.fillStyle = `rgba(${rgb},${(a * 0.85).toFixed(3)})`;
+          ctx.fillText(tech, sx + r + 5, sy);
         });
 
         ctx.restore();
