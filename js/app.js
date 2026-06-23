@@ -777,41 +777,13 @@
     }
   });
 
-  /* ---------- Smooth Scroll Inertia (wheel-driven, desktop) ---------- */
-  const _rm  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const _touch = 'ontouchstart' in window && navigator.maxTouchPoints > 0;
-  const useInertia = !_touch && !_rm;
-  let scrollTarget = window.scrollY;
-
-  if (useInertia) {
-    let sc = window.scrollY;
-    window.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      scrollTarget = Math.max(0, Math.min(
-        document.documentElement.scrollHeight - window.innerHeight,
-        scrollTarget + e.deltaY));
-    }, { passive: false });
-
-    (function rafScroll() {
-      const d = scrollTarget - sc;
-      if (Math.abs(d) > 0.3) {
-        sc += d * 0.1;
-        window.scrollTo(0, sc);
-      } else {
-        // Settled — re-sync with native scroll so keyboard/touch still work
-        sc = scrollTarget = window.scrollY;
-      }
-      requestAnimationFrame(rafScroll);
-    })();
-  }
-
+  /* ---------- Smooth anchor-link scrolling (native) ---------- */
   function smoothScrollTo(targetEl) {
     const navH = nav ? nav.offsetHeight : 0;
     const y = Math.max(0, Math.min(
       document.documentElement.scrollHeight - window.innerHeight,
       targetEl.getBoundingClientRect().top + window.scrollY - navH));
-    if (!useInertia) { window.scrollTo({ top: y, behavior: 'smooth' }); return; }
-    scrollTarget = y;
+    window.scrollTo({ top: y, behavior: 'smooth' });
   }
 
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
