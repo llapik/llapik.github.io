@@ -430,9 +430,10 @@ function SceneProjects() {
   const { progress } = useSprite();
 
   const projects = [
-    { idx: '01', title: 'Genesis', desc: 'WebGL particle field + shader playground', tag: 'webgl · glsl', r: 200, x: 380, y: 540 },
-    { idx: '02', title: 'Stellar', desc: 'Three.js portfolio scene & camera rig',     tag: 'three · gsap', r: 160, x: 960, y: 540 },
-    { idx: '03', title: 'Atlas',   desc: 'SCSS design system & motion tokens',         tag: 'scss · ts',    r: 120, x: 1480, y: 540 },
+    { idx: '01', title: 'AI PC Repair & Optimizer', desc: 'Загрузочная USB с локальным AI для диагностики и ремонта ПК', tag: 'python · js · shell', link: 'https://github.com/llapik/calcoc', r: 150, x: 330, y: 540 },
+    { idx: '02', title: 'Multi-Browser Operator', desc: 'Синхронное управление окнами Windows — мышь и клавиатура', tag: 'python · batch', link: 'https://github.com/llapik/-Multi-Browser-Operator-', r: 132, x: 745, y: 540 },
+    { idx: '03', title: 'Electronic Journal', desc: 'Журнал преподавателя на C# + MS Access', tag: 'c# · ms access', link: 'https://drive.google.com', r: 118, x: 1150, y: 540 },
+    { idx: '04', title: 'Coming Soon', desc: 'Full-stack автоматизация: realtime + облако', tag: 'ts · docker · postgres', link: 'https://github.com/llapik', r: 104, x: 1555, y: 540 },
   ];
 
   const cardProg = (i) => {
@@ -486,30 +487,42 @@ function SceneProjects() {
             </div>
 
             <T style={{
-              left: p.x - 200, top: p.y + ringR + 28,
-              width: 400, textAlign: 'center',
+              left: p.x - 190, top: p.y + ringR + 26,
+              width: 380, textAlign: 'center',
               opacity: ease,
               transform: `translateY(${(1 - ease) * 16}px)`,
             }}>
               <div style={{
-                fontFamily: HEL, fontSize: 36, fontWeight: 700,
-                letterSpacing: '-0.02em',
+                fontFamily: HEL, fontSize: 24, fontWeight: 700,
+                letterSpacing: '-0.02em', lineHeight: 1.05,
               }}>
                 {p.title}
               </div>
               <div style={{
-                fontFamily: HEL, fontSize: 16, fontWeight: 400,
+                fontFamily: HEL, fontSize: 15, fontWeight: 400,
                 lineHeight: 1.4, marginTop: 8,
               }}>
                 {p.desc}
               </div>
               <div style={{
                 fontFamily: MONO, fontSize: 11, color: DIM,
-                letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 14,
+                letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 12,
               }}>
                 ▸ {p.tag}
               </div>
             </T>
+
+            {/* Clickable link over the circle + label (real project) */}
+            {ease > 0.4 && (
+              <a href={p.link} target="_blank" rel="noopener" title={p.title} aria-label={p.title}
+                style={{
+                  position: 'absolute',
+                  left: p.x - 190, top: p.y - p.r - 12,
+                  width: 380, height: p.r + 300,
+                  pointerEvents: 'auto', cursor: 'pointer', zIndex: 5,
+                  display: 'block', background: 'transparent',
+                }} />
+            )}
           </React.Fragment>
         );
       })}
@@ -524,9 +537,9 @@ function SceneContact() {
   const { progress, localTime } = useSprite();
 
   const channels = [
-    { label: 'GitHub',   handle: 'github.com/llapik', x: 480 },
-    { label: 'Telegram', handle: 't.me/eayyyyyy',     x: 960 },
-    { label: 'Email',    handle: 'alex74s00@mail.ru', x: 1440 },
+    { label: 'GitHub',   handle: 'github.com/llapik', href: 'https://github.com/llapik', x: 480 },
+    { label: 'Telegram', handle: 't.me/eayyyyyy',     href: 'https://t.me/eayyyyyy',     x: 960 },
+    { label: 'Email',    handle: 'alex74s00@mail.ru', href: 'mailto:alex74s00@mail.ru',  x: 1440 },
   ];
 
   const conv = clamp(progress * 2, 0, 1);
@@ -605,6 +618,19 @@ function SceneContact() {
                 {c.handle}
               </div>
             </T>
+
+            {/* Clickable link over the channel orb + label */}
+            {eased > 0.3 && (
+              <a href={c.href} target={c.href.indexOf('mailto:') === 0 ? undefined : '_blank'}
+                rel="noopener" title={c.label} aria-label={c.label}
+                style={{
+                  position: 'absolute',
+                  left: x - 150, top: y - r - 12,
+                  width: 300, height: r + 190,
+                  pointerEvents: 'auto', cursor: 'pointer', zIndex: 5,
+                  display: 'block', background: 'transparent',
+                }} />
+            )}
           </React.Fragment>
         );
       })}

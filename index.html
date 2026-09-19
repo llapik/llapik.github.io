@@ -74,16 +74,45 @@
       transition: opacity 0.6s ease; }
     #reel-loading.done { opacity: 0; pointer-events: none; }
 
-    /* Back-to-classic link */
-    .classic-link {
-      position: fixed; top: 20px; right: 22px; z-index: 30;
+    /* Overlay navigation */
+    .reel-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px; pointer-events: none;
       font-family: 'JetBrains Mono', ui-monospace, monospace;
-      font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-      color: #0a0a0a; opacity: 0.4; text-decoration: none;
-      border: 1px solid rgba(10,10,10,0.25); padding: 5px 10px; border-radius: 20px;
-      transition: opacity 0.3s ease, border-color 0.3s ease; background: rgba(237,237,234,0.6); }
-    .classic-link:hover { opacity: 0.9; border-color: rgba(10,10,10,0.6); }
+    }
+    .reel-nav button, .reel-nav a {
+      pointer-events: auto; cursor: pointer; background: none; border: none;
+      font: inherit; color: #0a0a0a; text-decoration: none;
+      font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+      opacity: 0.55; transition: opacity 0.25s ease; padding: 4px 2px;
+    }
+    .reel-nav button:hover, .reel-nav a:hover { opacity: 1; }
+    .reel-nav-logo { font-weight: 600; letter-spacing: 0.1em !important; opacity: 0.85 !important; }
+    .reel-nav-links { display: flex; gap: 20px; align-items: center; }
+    .reel-nav-links a.chip {
+      border: 1px solid rgba(10,10,10,0.28); padding: 5px 11px; border-radius: 20px;
+      background: rgba(237,237,234,0.5); opacity: 0.5;
+    }
+    .reel-nav-links a.chip:hover { opacity: 0.95; border-color: rgba(10,10,10,0.6); }
 
+    /* Persistent contact links (pre-redesign content, always reachable) */
+    .reel-foot {
+      position: fixed; right: 24px; bottom: 22px; z-index: 30;
+      display: flex; gap: 16px; pointer-events: none;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .reel-foot a {
+      pointer-events: auto; color: #0a0a0a; text-decoration: none;
+      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      opacity: 0.5; transition: opacity 0.25s ease;
+    }
+    .reel-foot a:hover { opacity: 1; }
+
+    @media (max-width: 640px) {
+      .reel-nav-links { gap: 13px; }
+      .reel-nav-links button[data-frac="0.36"] { display: none; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .reel-hint .bar { animation: none; }
     }
@@ -103,7 +132,21 @@
     <p><a href="index-classic.html">Классическая версия сайта</a></p>
   </div>
 
-  <a class="classic-link" href="index-classic.html" title="Классическая версия">▸ classic</a>
+  <nav class="reel-nav" aria-label="Навигация">
+    <button class="reel-nav-logo" data-frac="0" aria-label="В начало">llapik</button>
+    <div class="reel-nav-links">
+      <button data-frac="0.36">about</button>
+      <button data-frac="0.69">work</button>
+      <button data-frac="0.90">contact</button>
+      <a class="chip" href="index-classic.html" title="Классическая версия">▸ classic</a>
+    </div>
+  </nav>
+
+  <footer class="reel-foot" aria-label="Контакты">
+    <a href="https://github.com/llapik" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://t.me/eayyyyyy" target="_blank" rel="noopener">Telegram</a>
+    <a href="mailto:alex74s00@mail.ru">Email</a>
+  </footer>
 
   <div id="reel-loading">▸ loading reel…</div>
 
@@ -118,5 +161,16 @@
   <script src="reel/vendor/react.production.min.js"></script>
   <script src="reel/vendor/react-dom.production.min.js"></script>
   <script src="reel/reel.bundle.js"></script>
+
+  <!-- Overlay nav wiring: jump to a scene by scrubbing to its scroll fraction -->
+  <script>
+    document.querySelectorAll('.reel-nav [data-frac]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var f = parseFloat(b.getAttribute('data-frac')) || 0;
+        if (typeof window.reelScrollToFrac === 'function') window.reelScrollToFrac(f);
+        else window.scrollTo({ top: (document.documentElement.scrollHeight - window.innerHeight) * f, behavior: 'smooth' });
+      });
+    });
+  </script>
 </body>
 </html>
