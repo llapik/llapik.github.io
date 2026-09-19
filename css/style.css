@@ -398,6 +398,27 @@ section {
 }
 .scene-indicator-sep { margin-bottom: 0.15rem; }
 
+/* ===== Reel HUD readout (fixed left-bottom telemetry) ===== */
+.hud-readout {
+  position: fixed; left: 2.5rem; bottom: 3rem;
+  z-index: 50; pointer-events: none;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.55s var(--expo), transform 0.55s var(--expo);
+}
+.hud-readout.on { opacity: 1; transform: translateY(0); }
+.hud-readout-key {
+  display: block;
+  font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink);
+}
+.hud-readout-val {
+  display: block; margin-top: 5px;
+  font-family: var(--font-mono); font-size: 0.56rem;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 900px) { .hud-readout { display: none; } }
+
 /* ===== About ===== */
 .about { flex-direction: column; justify-content: center; }
 .about-wrapper {

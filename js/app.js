@@ -568,26 +568,30 @@
       // centerOffset: 0 = section centered in viewport, +1 = one viewport below, -1 = one viewport above
       const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
 
-      let opacity, ty;
+      let opacity, ty, scale;
 
       if (centerOffset > 0.85) {
-        opacity = 0; ty = 55;
+        opacity = 0; ty = 55; scale = 0.955;
       } else if (centerOffset > 0) {
         const t = easeOutCubic(clamp01(1 - centerOffset / 0.85));
         opacity = t;
         ty = (1 - t) * 55;
+        scale = 0.955 + t * 0.045;          // punch-in from 0.955 → 1
       } else if (centerOffset >= -0.55) {
-        opacity = 1; ty = 0;
+        opacity = 1; ty = 0; scale = 1;
       } else if (centerOffset >= -1.0) {
         const t = easeOutCubic(clamp01((-centerOffset - 0.55) / 0.45));
         opacity = 1 - t * 0.65;
         ty = -t * 28;
+        scale = 1 - t * 0.03;               // subtle recede on exit
       } else {
-        opacity = 0.35; ty = -28;
+        opacity = 0.35; ty = -28; scale = 0.97;
       }
 
       wrapper.style.opacity = opacity;
-      wrapper.style.transform = ty !== 0 ? `translateY(${ty.toFixed(2)}px)` : 'none';
+      wrapper.style.transform = (ty !== 0 || scale !== 1)
+        ? `translateY(${ty.toFixed(2)}px) scale(${scale.toFixed(3)})`
+        : 'none';
     });
     sceneRafId = null;
   }
@@ -817,6 +821,49 @@
       renderProjects(tech === 'all' ? allProjects : allProjects.filter(p => (p.technologies || []).includes(tech)));
     }
   });
+
+  /* ---------- Reel HUD readout (fixed telemetry, reel signature) ---------- */
+  (function initHudReadout() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth < 900) return;
+
+    const hud = document.createElement('div');
+    hud.className = 'hud-readout';
+    hud.setAttribute('aria-hidden', 'true');
+    hud.innerHTML = '<span class="hud-readout-key"></span><span class="hud-readout-val"></span>';
+    document.body.appendChild(hud);
+    const keyEl = hud.querySelector('.hud-readout-key');
+    const valEl = hud.querySelector('.hud-readout-val');
+
+    const secEls = ['hero', 'about', 'projects', 'contact'].map(id => document.getElementById(id));
+    let raf = null, lastKey = '';
+
+    function update() {
+      raf = null;
+      const y = window.scrollY, vh = window.innerHeight;
+      const mid = y + vh * 0.5;
+      let idx = 0;
+      secEls.forEach((s, i) => { if (s && s.offsetTop <= mid) idx = i; });
+
+      const drift = Math.round((y % vh) - vh / 2);
+      const diam = [440, 749, 240, 112][idx];
+      const objCount = (allProjects && allProjects.length) || '—';
+      const readouts = [
+        ['body.01 · primary', '⌀' + diam + 'px · orbit ⟲ live'],
+        ['02 ▸ readout', '⌀' + diam + 'px · drift ' + (drift >= 0 ? '+' : '') + drift],
+        ['03 ▸ catalogue', objCount + ' objects · scan'],
+        ['04 ▸ signal', 'open · 3 channels · transmit'],
+      ];
+      const nk = readouts[idx][0];
+      if (nk !== lastKey) { keyEl.textContent = nk; lastKey = nk; }
+      valEl.textContent = readouts[idx][1];
+      hud.classList.toggle('on', y > vh * 0.4);
+    }
+
+    window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(update); }, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  })();
 
   /* ---------- Smooth anchor-link scrolling (native) ---------- */
   function smoothScrollTo(targetEl) {
