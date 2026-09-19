@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google-site-verification" content="5jb0Yg-COTRksopQIz3LwpAK6e-7rKLueHUhUNuMO6c" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+  <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
+  <meta name="author" content="Alexandr Stih">
+  <meta name="theme-color" content="#ededea">
+  <title>llapik — Портфолио разработчика | Александр Стих</title>
+  <link rel="canonical" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="en" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="x-default" href="https://llapik.github.io/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="llapik — Портфолио разработчика">
+  <meta property="og:description" content="Портфолио Александра Стих — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+  <meta property="og:url" content="https://llapik.github.io/">
+  <meta property="og:site_name" content="llapik Portfolio">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="llapik — Портфолио разработчика">
+  <meta name="twitter:description" content="Портфолио Александра Стих — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Alexandr Stih",
+    "alternateName": "llapik",
+    "url": "https://llapik.github.io",
+    "sameAs": ["https://github.com/llapik", "https://t.me/eayyyyyy"],
+    "jobTitle": "Developer & Designer",
+    "knowsAbout": ["JavaScript", "Python", "C++", "C#", "Node.js", "WebGL", "UI/UX", "CSS/SCSS"]
+  }
+  </script>
+
+  <!-- Font Awesome (for project link icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Scroll progress -->
+  <div class="scroll-progress" aria-hidden="true"><div class="scroll-progress-fill"></div></div>
+
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- Starfield -->
+  <canvas class="starfield" id="starfield" aria-hidden="true"></canvas>
+
+  <!-- Reticle -->
+  <div class="reticle" aria-hidden="true"></div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-text">llapik</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+      <div class="loader-sub">▸ initialising</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+      <a href="#hero" class="nav-logo">llapik / portfolio</a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about" data-i18n="nav.about">О себе</a></li>
+        <li><a href="#projects" data-i18n="nav.projects">Проекты</a></li>
+        <li><a href="#contact" data-i18n="nav.contact">Контакты</a></li>
+      </ul>
+      <div class="nav-controls">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">dark</button>
+        <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+
+      <div class="hero-content">
+        <span class="hero-greeting" data-i18n="hero.greeting">▸ Привет, я</span>
+        <h1 class="hero-name">
+          <span data-scramble>Alexandr</span>
+          <span data-scramble>Stih.</span>
+        </h1>
+        <p class="hero-tagline" data-i18n="hero.tagline">
+          Создаю цифровые продукты на стыке дизайна, кода и безответственности
+        </p>
+        <a href="#projects" class="hero-cta" data-i18n="hero.cta">
+          Смотреть проекты <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="hero-scroll-hint">
+        <span data-i18n="hero.dive">Погрузиться</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- Scene divider 01→02 -->
+    <div class="scene-divider" data-num="02" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">02</span>
+    </div>
+
+    <!-- About -->
+    <section class="about" id="about">
+
+      <div class="about-wrapper">
+        <span class="section-label">02 ▸ <span data-i18n="about.sec-label">о себе / about</span></span>
+        <h2 class="section-heading">About<br>the body.</h2>
+        <p class="about-text" id="about-text" data-i18n="about.text">
+          Я разработчик с фокусом на визуальные впечатления и интересные программные решения. Мне нравится решать сложные задачи путём реализации элегантных цифровых решений, где каждая деталь продумана — от анимации до архитектуры кода. Работаю с современными веб-технологиями, не брезгую нейросетями и всегда ищу способы сделать пользовательский опыт более живым и запоминающимся, а также расширить свой кругозор.
+        </p>
+        <div class="skills-grid">
+          <div class="skill-tag">JavaScript</div>
+          <div class="skill-tag">C++</div>
+          <div class="skill-tag">C#</div>
+          <div class="skill-tag">Node.js</div>
+          <div class="skill-tag">CSS / SCSS</div>
+          <div class="skill-tag">Python</div>
+          <div class="skill-tag">WebGL</div>
+          <div class="skill-tag">UI / UX</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene divider 02→03 -->
+    <div class="scene-divider" data-num="03" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">03</span>
+    </div>
+
+    <!-- Projects -->
+    <section class="projects" id="projects">
+      <div class="projects-wrapper">
+        <div class="projects-header">
+          <span class="section-label">03 ▸ <span data-i18n="projects.sec-label">projects / catalogue</span></span>
+          <h2 class="section-heading">the<br>catalogue</h2>
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-btn active" data-filter="all" data-i18n="projects.all">Все</button>
+          </div>
+        </div>
+        <div class="projects-list" id="projects-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene divider 03→04 -->
+    <div class="scene-divider" data-num="04" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">04</span>
+    </div>
+
+    <!-- Contact -->
+    <section class="contact" id="contact">
+      <div class="contact-wrapper">
+        <span class="section-label">04 ▸ <span data-i18n="contact.sec-label">contact / signal</span></span>
+        <h2 class="section-heading">open<br>signal.</h2>
+        <p class="contact-sub" data-i18n="contact.subtitle">
+          Открыт для сотрудничества и новых идей
+        </p>
+
+        <div class="contact-channels">
+
+          <a href="https://github.com/llapik" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="GitHub">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">GitHub</div>
+            <div class="contact-channel-handle">github.com/llapik</div>
+          </a>
+
+          <a href="https://t.me/eayyyyyy" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="Telegram">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Telegram</div>
+            <div class="contact-channel-handle">t.me/eayyyyyy</div>
+          </a>
+
+          <a href="mailto:alex74s00@mail.ru"
+             class="contact-channel" aria-label="Email">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Email</div>
+            <div class="contact-channel-handle">alex74s00@mail.ru</div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene indicator (HUD) -->
+    <div class="scene-indicator" id="scene-indicator" aria-hidden="true">
+      <span class="scene-indicator-num" id="scene-indicator-num">01</span>
+      <span class="scene-indicator-sep">/</span>
+      <span class="scene-indicator-total">04</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <p data-i18n="footer.copy">&copy; 2026 llapik. Все права защищены.</p>
+    </footer>
+
+  </div><!-- .content -->
+
+  <script src="js/i18n.js"></script>
+  <script src="js/cursor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
