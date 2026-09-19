@@ -654,24 +654,31 @@ function SceneContact() {
 // ─────────────────────────────────────────────────────────────────────────
 // MAIN COMPOSITION
 // ─────────────────────────────────────────────────────────────────────────
-// Crossfade wrapper: keeps a scene mounted through a fade tail and overlaps
-// with the neighbouring scene, so boundaries dissolve instead of hard-cutting.
+// Crossfade wrapper: softens scene boundaries by keeping a scene mounted
+// through a fade-out tail and dissolving it to the background colour, while
+// the next scene plays its own entrance. It does NOT wrap children in an
+// opacity group — that would isolate their mix-blend-mode:difference text
+// from the page background and wash it out. Fade-out is a background-coloured
+// veil painted over the outgoing scene instead.
 function FadeScene({ start, end, fade = 1.1, noOut = false, children }) {
   const { time } = useTimeline();
   const h = fade / 2;
-  if (time < start - h || time > end + h) return null;
+  if (time < start || time > end + h) return null;
   const dur = end - start;
   const localTime = Math.max(0, Math.min(dur, time - start));
   const progress = dur > 0 ? localTime / dur : 0;
-  let opacity = 1;
-  if (start > 0 && time < start + h) opacity = clamp((time - (start - h)) / fade, 0, 1);
-  if (!noOut && time > end - h) opacity = Math.min(opacity, clamp(((end + h) - time) / fade, 0, 1));
+  let veil = 0; // 0 = fully visible, 1 = fully faded to background
+  if (!noOut && time > end - h) veil = clamp((time - (end - h)) / fade, 0, 1);
   return (
-    <div style={{ position: 'absolute', inset: 0, opacity, willChange: 'opacity' }}>
-      <SpriteContext.Provider value={{ localTime, progress, duration: dur, visible: true }}>
-        {children}
-      </SpriteContext.Provider>
-    </div>
+    <SpriteContext.Provider value={{ localTime, progress, duration: dur, visible: true }}>
+      {children}
+      {veil > 0.001 && (
+        <div style={{
+          position: 'absolute', inset: 0, background: BG,
+          opacity: veil, pointerEvents: 'none', zIndex: 50,
+        }} />
+      )}
+    </SpriteContext.Provider>
   );
 }
 
