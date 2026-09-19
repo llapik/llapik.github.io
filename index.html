@@ -163,6 +163,12 @@
       font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
       color: #6b6b67; line-height: 1.7; max-width: 250px;
     }
+    .rotate-en {
+      display: block; margin-top: 6px;
+      font-size: 0.78em; font-weight: 400; letter-spacing: 0.14em;
+      color: #9d9d99;
+    }
+    .rotate-sub .rotate-en { margin-top: 4px; }
     .rotate-classic {
       margin-top: 4px; text-decoration: none; color: #0a0a0a;
       border: 1px solid rgba(10,10,10,0.42); padding: 13px 22px; border-radius: 26px;
@@ -213,11 +219,11 @@
   <a class="reel-fab" href="index-classic.html">▸ classic</a>
 
   <!-- Rotate-your-phone prompt (portrait phones) -->
-  <div id="rotate-hint" role="dialog" aria-label="Поверни телефон">
+  <div id="rotate-hint" role="dialog" aria-label="Поверни телефон / Rotate your phone">
     <div class="rotate-phone" aria-hidden="true"></div>
-    <div class="rotate-title">Поверни телефон</div>
-    <div class="rotate-sub">рил рассчитан на горизонтальный экран</div>
-    <a class="rotate-classic" href="index-classic.html">▸ открыть классику</a>
+    <div class="rotate-title">Поверни телефон<span class="rotate-en">rotate your phone</span></div>
+    <div class="rotate-sub">рил рассчитан на горизонтальный экран<span class="rotate-en">the reel is made for landscape</span></div>
+    <a class="rotate-classic" href="index-classic.html">▸ открыть классику&nbsp;·&nbsp;open classic</a>
   </div>
 
   <div id="reel-loading">▸ loading reel…</div>
