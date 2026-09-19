@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <meta name="google-site-verification" content="5jb0Yg-COTRksopQIz3LwpAK6e-7rKLueHUhUNuMO6c" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Mobile: the reel is 16:9 and unreadable in portrait — serve the responsive classic site.
+       Add ?reel=1 to force the reel on any device. -->
+  <script>
+    (function () {
+      try {
+        if (/[?&]reel=1\b/.test(location.search)) return;
+        var narrow = window.matchMedia('(max-width: 760px)').matches;
+        var portraitPhone = window.matchMedia('(orientation: portrait)').matches
+          && window.matchMedia('(max-width: 920px)').matches;
+        var coarse = window.matchMedia('(pointer: coarse)').matches
+          && window.matchMedia('(max-width: 1024px)').matches;
+        if (narrow || portraitPhone || coarse) location.replace('index-classic.html');
+      } catch (e) {}
+    })();
+  </script>
+
   <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
   <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
   <meta name="author" content="Alexandr Stih">

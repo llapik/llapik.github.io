@@ -654,6 +654,27 @@ function SceneContact() {
 // ─────────────────────────────────────────────────────────────────────────
 // MAIN COMPOSITION
 // ─────────────────────────────────────────────────────────────────────────
+// Crossfade wrapper: keeps a scene mounted through a fade tail and overlaps
+// with the neighbouring scene, so boundaries dissolve instead of hard-cutting.
+function FadeScene({ start, end, fade = 1.1, noOut = false, children }) {
+  const { time } = useTimeline();
+  const h = fade / 2;
+  if (time < start - h || time > end + h) return null;
+  const dur = end - start;
+  const localTime = Math.max(0, Math.min(dur, time - start));
+  const progress = dur > 0 ? localTime / dur : 0;
+  let opacity = 1;
+  if (start > 0 && time < start + h) opacity = clamp((time - (start - h)) / fade, 0, 1);
+  if (!noOut && time > end - h) opacity = Math.min(opacity, clamp(((end + h) - time) / fade, 0, 1));
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity, willChange: 'opacity' }}>
+      <SpriteContext.Provider value={{ localTime, progress, duration: dur, visible: true }}>
+        {children}
+      </SpriteContext.Provider>
+    </div>
+  );
+}
+
 function Reel() {
   return (
     <>
@@ -661,12 +682,12 @@ function Reel() {
       <Reticle />
       <StarField count={50} />
 
-      <Sprite start={0}    end={4}>   <SceneIntro    /></Sprite>
-      <Sprite start={4}    end={9}>   <SceneName     /></Sprite>
-      <Sprite start={9}    end={14}>  <SceneAbout    /></Sprite>
-      <Sprite start={14}   end={20}>  <SceneSkills   /></Sprite>
-      <Sprite start={20}   end={27}>  <SceneProjects /></Sprite>
-      <Sprite start={27}   end={32}>  <SceneContact  /></Sprite>
+      <FadeScene start={0}    end={4}>          <SceneIntro    /></FadeScene>
+      <FadeScene start={4}    end={9}>          <SceneName     /></FadeScene>
+      <FadeScene start={9}    end={14}>         <SceneAbout    /></FadeScene>
+      <FadeScene start={14}   end={20}>         <SceneSkills   /></FadeScene>
+      <FadeScene start={20}   end={27}>         <SceneProjects /></FadeScene>
+      <FadeScene start={27}   end={32} noOut>   <SceneContact  /></FadeScene>
 
       <HUD />
     </>
