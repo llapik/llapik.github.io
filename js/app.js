@@ -322,6 +322,47 @@
 
       [c2, c1, c0].forEach(drawOrb);
 
+      // Dashed halo rings around contact orbs (reel Scene 6 signature)
+      if (contactBlend > 0.04) {
+        ctx.save();
+        ctx.setLineDash([2, 5]);
+        ctx.lineWidth = 1;
+        [c0, c1, c2].forEach(c => {
+          if (c.o < 0.02) return;
+          ctx.strokeStyle = `rgba(${rgb},${(c.o * 0.4 * contactBlend).toFixed(3)})`;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.r + 16, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Reel-style telemetry readout pinned to the primary body (desktop)
+      const hudFade = (1 - contactBlend) * Math.min(1, c0.o * 2);
+      if (W > 900 && hudFade > 0.03) {
+        const labels = ['body.01 · primary', 'body.02 · drift', 'catalogue · scan', 'signal · open'];
+        const li = Math.max(0, Math.min(3, Math.round(sp)));
+        const orbitDisp = (t * 0.7) % (Math.PI * 2);
+        const diam = Math.round(c0.r * 2);
+        const pad = c0.r + 22;
+        let tx, align;
+        if (c0.x + pad + 160 < W - 20) { tx = c0.x + pad; align = 'left'; }
+        else { tx = Math.max(150, c0.x - pad); align = 'right'; }
+        const ty = c0.y - 8;
+        const hudA = 0.5 * hudFade;
+        ctx.textAlign = align;
+        ctx.textBaseline = 'alphabetic';
+        ctx.font = '600 12px JetBrains Mono, monospace';
+        ctx.fillStyle = `rgba(${rgb},${hudA.toFixed(3)})`;
+        ctx.fillText(labels[li], tx, ty);
+        ctx.font = '11px JetBrains Mono, monospace';
+        ctx.fillStyle = `rgba(${rgb},${(hudA * 0.72).toFixed(3)})`;
+        ctx.fillText('⌀ ' + diam + 'px', tx, ty + 18);
+        ctx.fillText('orbit ⟲ ' + orbitDisp.toFixed(2) + 'rad', tx, ty + 34);
+        ctx.textAlign = 'left';
+      }
+
       requestAnimationFrame(drawFrame);
     }
 

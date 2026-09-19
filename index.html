@@ -1,544 +1,231 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
 <head>
-<meta charset="utf-8" />
-<title>llapik — sprite reel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<style>
-  html, body { margin:0; padding:0; height:100%; background:#0a0a0a; overflow:hidden; }
-  #root { position:fixed; inset:0; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="google-site-verification" content="5jb0Yg-COTRksopQIz3LwpAK6e-7rKLueHUhUNuMO6c" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Портфолио Александра Стих (llapik) — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+  <meta name="keywords" content="llapik, Александр Стих, портфолио, разработчик, веб-разработка, JavaScript, Python, C++, WebGL">
+  <meta name="author" content="Alexandr Stih">
+  <meta name="theme-color" content="#ededea">
+  <title>llapik — Портфолио разработчика | Александр Стих</title>
+  <link rel="canonical" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="ru" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="en" href="https://llapik.github.io/">
+  <link rel="alternate" hreflang="x-default" href="https://llapik.github.io/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="llapik — Портфолио разработчика">
+  <meta property="og:description" content="Портфолио Александра Стих — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+  <meta property="og:url" content="https://llapik.github.io/">
+  <meta property="og:site_name" content="llapik Portfolio">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="llapik — Портфолио разработчика">
+  <meta name="twitter:description" content="Портфолио Александра Стих — разработчик и дизайнер. Проекты на JavaScript, Python, C++, C#, WebGL.">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Alexandr Stih",
+    "alternateName": "llapik",
+    "url": "https://llapik.github.io",
+    "sameAs": ["https://github.com/llapik", "https://t.me/eayyyyyy"],
+    "jobTitle": "Developer & Designer",
+    "knowsAbout": ["JavaScript", "Python", "C++", "C#", "Node.js", "WebGL", "UI/UX", "CSS/SCSS"]
+  }
+  </script>
+
+  <!-- Font Awesome (for project link icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- Scroll progress -->
+  <div class="scroll-progress" aria-hidden="true"><div class="scroll-progress-fill"></div></div>
 
-<script type="text/babel">
-const Easing = {
-  linear: (t) => t,
-  easeInQuad:    (t) => t * t,
-  easeOutQuad:   (t) => t * (2 - t),
-  easeInOutQuad: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
-  easeInCubic:    (t) => t * t * t,
-  easeOutCubic:   (t) => (--t) * t * t + 1,
-  easeInOutCubic: (t) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
-  easeInQuart:    (t) => t * t * t * t,
-  easeOutQuart:   (t) => 1 - (--t) * t * t * t,
-  easeInOutQuart: (t) => (t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t),
-  easeInExpo:  (t) => (t === 0 ? 0 : Math.pow(2, 10 * (t - 1))),
-  easeOutExpo: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
-  easeInOutExpo: (t) => {
-    if (t === 0) return 0; if (t === 1) return 1;
-    if (t < 0.5) return 0.5 * Math.pow(2, 20 * t - 10);
-    return 1 - 0.5 * Math.pow(2, -20 * t + 10);
-  },
-  easeInSine:    (t) => 1 - Math.cos((t * Math.PI) / 2),
-  easeOutSine:   (t) => Math.sin((t * Math.PI) / 2),
-  easeInOutSine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
-  easeOutBack: (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t-1,3) + c1 * Math.pow(t-1,2); },
-  easeInBack:  (t) => { const c1 = 1.70158, c3 = c1 + 1; return c3*t*t*t - c1*t*t; },
-  easeInOutBack: (t) => {
-    const c1 = 1.70158, c2 = c1 * 1.525;
-    return t < 0.5 ? (Math.pow(2*t,2)*((c2+1)*2*t-c2))/2 : (Math.pow(2*t-2,2)*((c2+1)*(t*2-2)+c2)+2)/2;
-  },
-  easeOutElastic: (t) => {
-    const c4 = (2*Math.PI)/3;
-    if (t===0) return 0; if (t===1) return 1;
-    return Math.pow(2,-10*t)*Math.sin((t*10-0.75)*c4)+1;
-  },
-};
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
 
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  <!-- Starfield -->
+  <canvas class="starfield" id="starfield" aria-hidden="true"></canvas>
 
-function interpolate(input, output, ease = Easing.linear) {
-  return (t) => {
-    if (t <= input[0]) return output[0];
-    if (t >= input[input.length-1]) return output[output.length-1];
-    for (let i = 0; i < input.length-1; i++) {
-      if (t >= input[i] && t <= input[i+1]) {
-        const span = input[i+1] - input[i];
-        const local = span === 0 ? 0 : (t - input[i]) / span;
-        const easeFn = Array.isArray(ease) ? (ease[i] || Easing.linear) : ease;
-        return output[i] + (output[i+1] - output[i]) * easeFn(local);
-      }
-    }
-    return output[output.length-1];
-  };
-}
+  <!-- Reticle -->
+  <div class="reticle" aria-hidden="true"></div>
 
-const TimelineContext = React.createContext({ time: 0, duration: 10, playing: false });
-const useTime = () => React.useContext(TimelineContext).time;
-const useTimeline = () => React.useContext(TimelineContext);
-const SpriteContext = React.createContext({ localTime: 0, progress: 0, duration: 0 });
-const useSprite = () => React.useContext(SpriteContext);
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
 
-function Sprite({ start = 0, end = Infinity, children, keepMounted = false }) {
-  const { time } = useTimeline();
-  const visible = time >= start && time <= end;
-  if (!visible && !keepMounted) return null;
-  const duration = end - start;
-  const localTime = Math.max(0, time - start);
-  const progress = duration > 0 && isFinite(duration) ? clamp(localTime / duration, 0, 1) : 0;
-  const value = { localTime, progress, duration, visible };
-  return (
-    <SpriteContext.Provider value={value}>
-      {typeof children === 'function' ? children(value) : children}
-    </SpriteContext.Provider>
-  );
-}
-
-function IconButton({ children, onClick, title }) {
-  const [hover, setHover] = React.useState(false);
-  return (
-    <button onClick={onClick} title={title}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{
-        width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center',
-        background: hover ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
-        border:'1px solid rgba(255,255,255,0.1)', borderRadius:6,
-        color:'#f6f4ef', cursor:'pointer', padding:0, transition:'background 120ms',
-      }}>
-      {children}
-    </button>
-  );
-}
-
-function PlaybackBar({ time, duration, playing, onPlayPause, onReset, onSeek, onHover }) {
-  const trackRef = React.useRef(null);
-  const [dragging, setDragging] = React.useState(false);
-  const timeFromEvent = React.useCallback((e) => {
-    const rect = trackRef.current.getBoundingClientRect();
-    return clamp((e.clientX - rect.left) / rect.width, 0, 1) * duration;
-  }, [duration]);
-  const onTrackMove = (e) => {
-    if (!trackRef.current) return;
-    dragging ? onSeek(timeFromEvent(e)) : onHover(timeFromEvent(e));
-  };
-  const onTrackDown = (e) => { setDragging(true); onSeek(timeFromEvent(e)); onHover(null); };
-  React.useEffect(() => {
-    if (!dragging) return;
-    const onUp = () => setDragging(false);
-    const onMove = (e) => { if (trackRef.current) onSeek(timeFromEvent(e)); };
-    window.addEventListener('mouseup', onUp);
-    window.addEventListener('mousemove', onMove);
-    return () => { window.removeEventListener('mouseup', onUp); window.removeEventListener('mousemove', onMove); };
-  }, [dragging, timeFromEvent, onSeek]);
-  const pct = duration > 0 ? (time / duration) * 100 : 0;
-  const fmt = (t) => {
-    const total = Math.max(0, t);
-    const m = Math.floor(total/60), s = Math.floor(total%60), cs = Math.floor((total*100)%100);
-    return `${m}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
-  };
-  const mono = 'JetBrains Mono, ui-monospace, monospace';
-  return (
-    <div style={{
-      display:'flex', alignItems:'center', gap:12, padding:'8px 16px',
-      background:'rgba(20,20,20,0.92)', borderTop:'1px solid rgba(255,255,255,0.08)',
-      width:'100%', maxWidth:680, alignSelf:'center', borderRadius:8, color:'#f6f4ef',
-      fontFamily:'Inter, system-ui, sans-serif', userSelect:'none', flexShrink:0,
-    }}>
-      <IconButton onClick={onReset} title="Return to start (0)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M3 2v10M12 2L5 7l7 5V2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-        </svg>
-      </IconButton>
-      <IconButton onClick={onPlayPause} title="Play/pause (space)">
-        {playing
-          ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="2" width="3" height="10" fill="currentColor"/><rect x="8" y="2" width="3" height="10" fill="currentColor"/></svg>
-          : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2l9 5-9 5V2z" fill="currentColor"/></svg>
-        }
-      </IconButton>
-      <div style={{ fontFamily:mono, fontSize:12, fontVariantNumeric:'tabular-nums', width:64, textAlign:'right', color:'#f6f4ef' }}>{fmt(time)}</div>
-      <div ref={trackRef} onMouseMove={onTrackMove} onMouseLeave={() => { if (!dragging) onHover(null); }} onMouseDown={onTrackDown}
-        style={{ flex:1, height:22, position:'relative', cursor:'pointer', display:'flex', alignItems:'center' }}>
-        <div style={{ position:'absolute', left:0, right:0, height:4, background:'rgba(255,255,255,0.12)', borderRadius:2 }}/>
-        <div style={{ position:'absolute', left:0, width:`${pct}%`, height:4, background:'oklch(72% 0.12 250)', borderRadius:2 }}/>
-        <div style={{ position:'absolute', left:`${pct}%`, top:'50%', width:12, height:12, marginLeft:-6, marginTop:-6, background:'#fff', borderRadius:6, boxShadow:'0 2px 4px rgba(0,0,0,0.4)' }}/>
-      </div>
-      <div style={{ fontFamily:mono, fontSize:12, fontVariantNumeric:'tabular-nums', width:64, textAlign:'left', color:'rgba(246,244,239,0.55)' }}>{fmt(duration)}</div>
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-text">llapik</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+      <div class="loader-sub">▸ initialising</div>
     </div>
-  );
-}
+  </div>
 
-function Stage({ width=1920, height=1080, duration=10, background='#f6f4ef', loop=true, autoplay=true, persistKey='animstage', children }) {
-  const [time, setTime] = React.useState(() => {
-    try { const v = parseFloat(localStorage.getItem(persistKey+':t')||'0'); return isFinite(v) ? clamp(v,0,duration) : 0; } catch { return 0; }
-  });
-  const [playing, setPlaying] = React.useState(autoplay);
-  const [hoverTime, setHoverTime] = React.useState(null);
-  const [scale, setScale] = React.useState(1);
-  const stageRef = React.useRef(null);
-  const rafRef = React.useRef(null);
-  const lastTsRef = React.useRef(null);
+  <!-- Content -->
+  <div class="content">
 
-  React.useEffect(() => { try { localStorage.setItem(persistKey+':t', String(time)); } catch {} }, [time, persistKey]);
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+      <a href="#hero" class="nav-logo">llapik / portfolio</a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about" data-i18n="nav.about">О себе</a></li>
+        <li><a href="#projects" data-i18n="nav.projects">Проекты</a></li>
+        <li><a href="#contact" data-i18n="nav.contact">Контакты</a></li>
+      </ul>
+      <div class="nav-controls">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">dark</button>
+        <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
 
-  React.useEffect(() => {
-    if (!stageRef.current) return;
-    const el = stageRef.current;
-    const measure = () => {
-      const s = Math.min(el.clientWidth/width, (el.clientHeight-44)/height);
-      setScale(Math.max(0.05, s));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener('resize', measure);
-    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, [width, height]);
+    <!-- Hero -->
+    <section class="hero" id="hero">
 
-  React.useEffect(() => {
-    if (!playing) { lastTsRef.current = null; return; }
-    const step = (ts) => {
-      if (lastTsRef.current == null) lastTsRef.current = ts;
-      const dt = (ts - lastTsRef.current) / 1000;
-      lastTsRef.current = ts;
-      setTime((t) => {
-        let next = t + dt;
-        if (next >= duration) { if (loop) next = next % duration; else { next = duration; setPlaying(false); } }
-        return next;
-      });
-      rafRef.current = requestAnimationFrame(step);
-    };
-    rafRef.current = requestAnimationFrame(step);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); lastTsRef.current = null; };
-  }, [playing, duration, loop]);
+      <div class="hero-content">
+        <span class="hero-greeting" data-i18n="hero.greeting">▸ Привет, я</span>
+        <h1 class="hero-name">
+          <span data-scramble>Alexandr</span>
+          <span data-scramble>Stih.</span>
+        </h1>
+        <p class="hero-tagline" data-i18n="hero.tagline">
+          Создаю цифровые продукты на стыке дизайна, кода и безответственности
+        </p>
+        <a href="#projects" class="hero-cta" data-i18n="hero.cta">
+          Смотреть проекты <span>&rarr;</span>
+        </a>
+      </div>
 
-  React.useEffect(() => {
-    const onKey = (e) => {
-      if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;
-      if (e.code === 'Space') { e.preventDefault(); setPlaying(p => !p); }
-      else if (e.code === 'ArrowLeft') setTime(t => clamp(t-(e.shiftKey?1:0.1), 0, duration));
-      else if (e.code === 'ArrowRight') setTime(t => clamp(t+(e.shiftKey?1:0.1), 0, duration));
-      else if (e.key === '0' || e.code === 'Home') setTime(0);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [duration]);
+      <div class="hero-scroll-hint">
+        <span data-i18n="hero.dive">Погрузиться</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
 
-  const displayTime = hoverTime != null ? hoverTime : time;
-  const ctxValue = React.useMemo(() => ({ time:displayTime, duration, playing, setTime, setPlaying }), [displayTime, duration, playing]);
+    <!-- Scene divider 01→02 -->
+    <div class="scene-divider" data-num="02" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">02</span>
+    </div>
 
-  return (
-    <div ref={stageRef} style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', background:'#0a0a0a' }}>
-      <div style={{ flex:1, width:'100%', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', minHeight:0 }}>
-        <div style={{ width, height, background, position:'relative', transform:`scale(${scale})`, transformOrigin:'center', flexShrink:0, boxShadow:'0 20px 60px rgba(0,0,0,0.4)', overflow:'hidden' }}>
-          <TimelineContext.Provider value={ctxValue}>{children}</TimelineContext.Provider>
+    <!-- About -->
+    <section class="about" id="about">
+
+      <div class="about-wrapper">
+        <span class="section-label">02 ▸ <span data-i18n="about.sec-label">о себе / about</span></span>
+        <h2 class="section-heading">About<br>the body.</h2>
+        <p class="about-text" id="about-text" data-i18n="about.text">
+          Я разработчик с фокусом на визуальные впечатления и интересные программные решения. Мне нравится решать сложные задачи путём реализации элегантных цифровых решений, где каждая деталь продумана — от анимации до архитектуры кода. Работаю с современными веб-технологиями, не брезгую нейросетями и всегда ищу способы сделать пользовательский опыт более живым и запоминающимся, а также расширить свой кругозор.
+        </p>
+        <div class="skills-grid">
+          <div class="skill-tag">JavaScript</div>
+          <div class="skill-tag">C++</div>
+          <div class="skill-tag">C#</div>
+          <div class="skill-tag">Node.js</div>
+          <div class="skill-tag">CSS / SCSS</div>
+          <div class="skill-tag">Python</div>
+          <div class="skill-tag">WebGL</div>
+          <div class="skill-tag">UI / UX</div>
         </div>
       </div>
-      <PlaybackBar time={displayTime} duration={duration} playing={playing}
-        onPlayPause={() => setPlaying(p => !p)} onReset={() => setTime(0)}
-        onSeek={t => setTime(t)} onHover={t => setHoverTime(t)} />
+    </section>
+
+    <!-- Scene divider 02→03 -->
+    <div class="scene-divider" data-num="03" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">03</span>
     </div>
-  );
-}
 
-// ── Scene constants ───────────────────────────────────────────────────────
-const HEL = 'Helvetica Neue, Helvetica, Arial, sans-serif';
-const MONO = 'JetBrains Mono, ui-monospace, monospace';
-const FG = '#0a0a0a';
-const BG = '#ededea';
-const DIM = '#8a8a86';
-
-function Grain() {
-  return <div style={{ position:'absolute', inset:0, pointerEvents:'none', opacity:0.06, mixBlendMode:'multiply',
-    backgroundImage:`url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")` }} />;
-}
-
-function StarField({ count=60 }) {
-  const stars = React.useMemo(() => {
-    const arr = []; let seed = 1337;
-    const rnd = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
-    for (let i = 0; i < count; i++) arr.push({ x:rnd()*1920, y:rnd()*1080, r:rnd()*1.6+0.4, o:rnd()*0.5+0.15 });
-    return arr;
-  }, [count]);
-  const t = useTime();
-  return (
-    <svg width="1920" height="1080" style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-      {stars.map((s,i) => <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={FG} opacity={s.o*(0.6+0.4*Math.sin(t*2+i*0.7))} />)}
-    </svg>
-  );
-}
-
-function Circle({ cx, cy, r, fill=FG, stroke=null, strokeW=1, opacity=1, dashed=false }) {
-  return (
-    <svg width="1920" height="1080" style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-      <circle cx={cx} cy={cy} r={r} fill={fill} stroke={stroke||'none'} strokeWidth={strokeW} strokeDasharray={dashed?'4 6':'none'} opacity={opacity} />
-    </svg>
-  );
-}
-
-function HUD() {
-  const t = useTime();
-  const { duration } = useTimeline();
-  const fmt = (v) => { const m=Math.floor(v/60),s=Math.floor(v%60),cs=Math.floor((v*100)%100); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(cs).padStart(2,'0')}`; };
-  return (
-    <>
-      <div style={{ position:'absolute', top:36, left:48, fontFamily:MONO, fontSize:13, color:FG, letterSpacing:'0.06em', textTransform:'uppercase' }}>llapik / portfolio reel</div>
-      <div style={{ position:'absolute', top:36, right:48, fontFamily:MONO, fontSize:13, color:FG, letterSpacing:'0.06em', fontVariantNumeric:'tabular-nums' }}>T+{fmt(t)} / {fmt(duration)}</div>
-      <div style={{ position:'absolute', bottom:36, left:48, fontFamily:MONO, fontSize:11, color:DIM, letterSpacing:'0.08em', textTransform:'uppercase' }}>2026 — alexandr stih</div>
-      <div style={{ position:'absolute', bottom:36, right:48, fontFamily:MONO, fontSize:11, color:DIM, letterSpacing:'0.08em', textTransform:'uppercase' }}>sprite reel ▸ helvetica monochrome</div>
-    </>
-  );
-}
-
-function Reticle() {
-  return (
-    <svg width="1920" height="1080" style={{ position:'absolute', inset:0, pointerEvents:'none', opacity:0.18 }}>
-      <line x1="960" y1="0" x2="960" y2="1080" stroke={FG} strokeWidth="0.5" strokeDasharray="2 8" />
-      <line x1="0" y1="540" x2="1920" y2="540" stroke={FG} strokeWidth="0.5" strokeDasharray="2 8" />
-    </svg>
-  );
-}
-
-// ── Scene 1 — Intro (0–4s) ────────────────────────────────────────────────
-function SceneIntro() {
-  const { progress, localTime } = useSprite();
-  const radius = interpolate([0,0.4,1],[0,180,220],Easing.easeOutCubic)(progress);
-  const num = Math.floor(interpolate([0,0.7,1],[0,1,1],Easing.easeOutQuad)(progress)*999);
-  return (
-    <>
-      <Circle cx={960} cy={540} r={radius} fill={FG} />
-      {localTime > 0.2 && (
-        <div style={{ position:'absolute', left:48, top:532, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.12em', textTransform:'uppercase', opacity:clamp((localTime-0.2)/0.5,0,1) }}>▸ booting reel</div>
-      )}
-      <div style={{ position:'absolute', right:48, bottom:120, fontFamily:HEL, fontSize:240, fontWeight:700, color:FG, letterSpacing:'-0.06em', lineHeight:0.85, fontVariantNumeric:'tabular-nums' }}>{String(num).padStart(3,'0')}</div>
-      <div style={{ position:'absolute', right:48, bottom:80, fontFamily:MONO, fontSize:12, color:DIM, letterSpacing:'0.12em', textTransform:'uppercase' }}>scene 01 / 06</div>
-    </>
-  );
-}
-
-// ── Scene 2 — Name (4–9s) ─────────────────────────────────────────────────
-function SceneName() {
-  const { progress, localTime } = useSprite();
-  const orbitT = localTime * 0.7;
-  const sunX = 960, sunY = 540;
-  const sunR = interpolate([0,0.3],[220,80],Easing.easeInOutCubic)(progress);
-  const moonX = sunX + 320*Math.cos(orbitT*2*Math.PI);
-  const moonY = sunY + 320*0.35*Math.sin(orbitT*2*Math.PI);
-  const farX = sunX + 600*Math.cos(-orbitT*2*Math.PI*0.4+1.2);
-  const farY = sunY + 220*Math.sin(-orbitT*2*Math.PI*0.4+1.2);
-
-  const renderText = (str, startIdx=0) => [...str].map((ch,i) => {
-    const p = clamp((progress-(0.15+(startIdx+i)*0.04))/0.3,0,1);
-    const e = Easing.easeOutCubic(p);
-    return <span key={i} style={{ display:'inline-block', opacity:e, transform:`translateY(${(1-e)*30}px)`, color:FG }}>{ch===' '?' ':ch}</span>;
-  });
-
-  return (
-    <>
-      <svg width="1920" height="1080" style={{ position:'absolute', inset:0, opacity:0.18 }}>
-        <ellipse cx={sunX} cy={sunY} rx={320} ry={320*0.35} fill="none" stroke={FG} strokeWidth="0.8" strokeDasharray="3 8" />
-      </svg>
-      <Circle cx={sunX} cy={sunY} r={sunR} fill={FG} />
-      <Circle cx={moonX} cy={moonY} r={28} fill={FG} />
-      <Circle cx={farX} cy={farY} r={14} fill={FG} opacity={0.6} />
-      <div style={{ position:'absolute', left:120, top:200, fontFamily:MONO, fontSize:14, color:FG, letterSpacing:'0.18em', textTransform:'uppercase', opacity:clamp(progress*4,0,1) }}>▸ привет, я</div>
-      <div style={{ position:'absolute', left:120, top:260, fontFamily:HEL, fontSize:220, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.92 }}>{renderText('Alexandr')}</div>
-      <div style={{ position:'absolute', left:120, top:470, fontFamily:HEL, fontSize:220, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.92 }}>{renderText('Stih.',8)}</div>
-      <div style={{ position:'absolute', left:124, top:720, fontFamily:HEL, fontSize:26, fontWeight:400, color:FG, letterSpacing:'-0.005em', maxWidth:880, opacity:clamp((progress-0.5)*4,0,1), transform:`translateY(${(1-clamp((progress-0.5)*4,0,1))*20}px)` }}>
-        Создаю цифровые продукты на стыке дизайна,<br/>кода и безответственности.
+    <!-- Projects -->
+    <section class="projects" id="projects">
+      <div class="projects-wrapper">
+        <div class="projects-header">
+          <span class="section-label">03 ▸ <span data-i18n="projects.sec-label">projects / catalogue</span></span>
+          <h2 class="section-heading">the<br>catalogue</h2>
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-btn active" data-filter="all" data-i18n="projects.all">Все</button>
+          </div>
+        </div>
+        <div class="projects-list" id="projects-grid">
+          <!-- Rendered by JS -->
+        </div>
       </div>
-      <div style={{ position:'absolute', right:120, bottom:220, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.12em', textTransform:'uppercase', textAlign:'right', opacity:clamp((progress-0.4)*3,0,1) }}>
-        body.01 — primary<br/>⌀ {Math.round(sunR*2)}px<br/>orbit ⟲ {orbitT.toFixed(2)}rad
+    </section>
+
+    <!-- Scene divider 03→04 -->
+    <div class="scene-divider" data-num="04" aria-hidden="true">
+      <div class="scene-divider-line"></div>
+      <span class="scene-divider-label">04</span>
+    </div>
+
+    <!-- Contact -->
+    <section class="contact" id="contact">
+      <div class="contact-wrapper">
+        <span class="section-label">04 ▸ <span data-i18n="contact.sec-label">contact / signal</span></span>
+        <h2 class="section-heading">open<br>signal.</h2>
+        <p class="contact-sub" data-i18n="contact.subtitle">
+          Открыт для сотрудничества и новых идей
+        </p>
+
+        <div class="contact-channels">
+
+          <a href="https://github.com/llapik" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="GitHub">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">GitHub</div>
+            <div class="contact-channel-handle">github.com/llapik</div>
+          </a>
+
+          <a href="https://t.me/eayyyyyy" target="_blank" rel="noopener"
+             class="contact-channel" aria-label="Telegram">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Telegram</div>
+            <div class="contact-channel-handle">t.me/eayyyyyy</div>
+          </a>
+
+          <a href="mailto:alex74s00@mail.ru"
+             class="contact-channel" aria-label="Email">
+            <div class="contact-channel-orb"></div>
+            <div class="contact-channel-name">Email</div>
+            <div class="contact-channel-handle">alex74s00@mail.ru</div>
+          </a>
+
+        </div>
       </div>
-    </>
-  );
-}
+    </section>
 
-// ── Scene 3 — About (9–14s) ───────────────────────────────────────────────
-function SceneAbout() {
-  const { progress, localTime } = useSprite();
-  const bigX = interpolate([0,1],[-80,480],Easing.easeOutCubic)(progress);
-  const bigR = interpolate([0,0.5,1],[340,360,380],Easing.easeInOutQuad)(progress);
-  const smallX = interpolate([0,1],[1900,1380],Easing.easeOutCubic)(progress);
-  const smallY = interpolate([0,1],[200,280],Easing.easeInOutQuad)(progress);
+    <!-- Scene indicator (HUD) -->
+    <div class="scene-indicator" id="scene-indicator" aria-hidden="true">
+      <span class="scene-indicator-num" id="scene-indicator-num">01</span>
+      <span class="scene-indicator-sep">/</span>
+      <span class="scene-indicator-total">04</span>
+    </div>
 
-  const paragraph = `Developer & Creative Thinker.\n\nЯ разработчик с фокусом на визуальные\nвпечатления и интересные программные\nрешения. Каждая деталь продумана —\nот анимации до архитектуры кода.`;
-  const revealChars = Math.floor(interpolate([0.15,0.95],[0,paragraph.length],Easing.linear)(progress));
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <p data-i18n="footer.copy">&copy; 2026 llapik. Все права защищены.</p>
+    </footer>
 
-  return (
-    <>
-      <Circle cx={bigX} cy={540} r={bigR} fill={FG} />
-      <Circle cx={smallX} cy={smallY} r={90} fill="none" stroke={FG} strokeW={2} dashed />
-      <Circle cx={smallX} cy={smallY} r={90*0.55} fill={FG} />
-      <div style={{ position:'absolute', left:120, top:140, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.18em', textTransform:'uppercase', opacity:clamp(progress*5,0,1) }}>02 ▸ о себе / about</div>
-      <div style={{ position:'absolute', left:720, top:220, fontFamily:HEL, fontSize:140, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.9, opacity:clamp(progress*4,0,1), transform:`translateY(${(1-clamp(progress*4,0,1))*30}px)` }}>About<br/>the body.</div>
-      <div style={{ position:'absolute', left:720, top:560, width:760, fontFamily:HEL, fontSize:26, fontWeight:400, color:FG, lineHeight:1.45, whiteSpace:'pre-wrap' }}>
-        {paragraph.slice(0, revealChars)}
-        <span style={{ display:'inline-block', width:12, height:28, background:FG, marginLeft:2, verticalAlign:'text-bottom', opacity:localTime%0.6<0.3?1:0 }} />
-      </div>
-      <div style={{ position:'absolute', left:120, bottom:140, fontFamily:MONO, fontSize:12, color:DIM, letterSpacing:'0.1em', textTransform:'uppercase' }}>readout · ⌀{Math.round(bigR*2)}px · drift {bigX>0?'+':''}{Math.round(bigX)}</div>
-    </>
-  );
-}
+  </div><!-- .content -->
 
-// ── Scene 4 — Skills (14–20s) ─────────────────────────────────────────────
-function SceneSkills() {
-  const { progress } = useSprite();
-  const skills = [
-    { label:'JavaScript', x:380,  y:380, r:70 },
-    { label:'C++',         x:760,  y:240, r:50 },
-    { label:'C#',          x:1180, y:320, r:42 },
-    { label:'Node.js',     x:1540, y:440, r:58 },
-    { label:'CSS / SCSS',  x:1380, y:720, r:64 },
-    { label:'Python',      x:940,  y:800, r:76 },
-    { label:'WebGL',       x:540,  y:740, r:48 },
-    { label:'UI / UX',     x:220,  y:600, r:36 },
-  ];
-  const arrival = (i) => clamp((progress-i*0.05)/0.45, 0, 1);
-  const lineProgress = clamp((progress-0.45)/0.4, 0, 1);
-  const seedOffset = (i) => { const a=(i*137.5)*Math.PI/180; return { dx:Math.cos(a)*1400, dy:Math.sin(a)*1000 }; };
-
-  return (
-    <>
-      <div style={{ position:'absolute', left:120, top:140, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.18em', textTransform:'uppercase', opacity:clamp(progress*5,0,1) }}>03 ▸ stack / constellation</div>
-      <div style={{ position:'absolute', left:120, top:200, fontFamily:HEL, fontSize:110, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.95, opacity:clamp(progress*4,0,1) }}>the&nbsp;stack</div>
-      <svg width="1920" height="1080" style={{ position:'absolute', inset:0 }}>
-        {skills.map((s,i) => {
-          if (i===0) return null;
-          if (arrival(i-1)<0.9 || arrival(i)<0.9) return null;
-          const prev = skills[i-1];
-          const drawT = clamp(lineProgress*1.5-i*0.06, 0, 1);
-          return <line key={i} x1={prev.x} y1={prev.y} x2={prev.x+(s.x-prev.x)*drawT} y2={prev.y+(s.y-prev.y)*drawT} stroke={FG} strokeWidth="1" strokeDasharray="3 6" opacity="0.5" />;
-        })}
-        {(() => {
-          const drawT = clamp(lineProgress*1.4-0.6, 0, 1);
-          if (drawT<=0) return null;
-          const last=skills[skills.length-1], first=skills[0];
-          return <line x1={last.x} y1={last.y} x2={last.x+(first.x-last.x)*drawT} y2={last.y+(first.y-last.y)*drawT} stroke={FG} strokeWidth="1" strokeDasharray="3 6" opacity="0.5" />;
-        })()}
-      </svg>
-      {skills.map((s,i) => {
-        const a = arrival(i);
-        const ease = Easing.easeOutBack(a);
-        const off = seedOffset(i);
-        const x = s.x - off.dx*(1-ease);
-        const y = s.y - off.dy*(1-ease);
-        const labelOpacity = clamp((a-0.7)/0.3, 0, 1);
-        return (
-          <React.Fragment key={i}>
-            <Circle cx={x} cy={y} r={s.r*Math.max(0.2,ease)} fill={FG} />
-            <div style={{ position:'absolute', left:x+s.r+14, top:y-12, fontFamily:HEL, fontSize:22, fontWeight:500, color:FG, letterSpacing:'-0.005em', opacity:labelOpacity, transform:`translateX(${(1-labelOpacity)*-10}px)`, whiteSpace:'nowrap' }}>
-              {s.label}
-              <div style={{ fontFamily:MONO, fontSize:11, color:DIM, letterSpacing:'0.1em', marginTop:2 }}>⌀{Math.round(s.r*2)} · #{String(i+1).padStart(2,'0')}</div>
-            </div>
-          </React.Fragment>
-        );
-      })}
-    </>
-  );
-}
-
-// ── Scene 5 — Projects (20–27s) ───────────────────────────────────────────
-function SceneProjects() {
-  const { progress } = useSprite();
-  const projects = [
-    { idx:'01', title:'Genesis', desc:'WebGL particle field + shader playground', tag:'webgl · glsl', r:200, x:380, y:540 },
-    { idx:'02', title:'Stellar', desc:'Three.js portfolio scene & camera rig',     tag:'three · gsap', r:160, x:960, y:540 },
-    { idx:'03', title:'Atlas',   desc:'SCSS design system & motion tokens',         tag:'scss · ts',    r:120, x:1480, y:540 },
-  ];
-  const cardProg = (i) => clamp((progress-0.05-i*0.18)/0.45, 0, 1);
-
-  return (
-    <>
-      <div style={{ position:'absolute', left:120, top:140, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.18em', textTransform:'uppercase', opacity:clamp(progress*5,0,1) }}>04 ▸ projects / catalogue</div>
-      <div style={{ position:'absolute', left:120, top:200, fontFamily:HEL, fontSize:110, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.95, opacity:clamp(progress*4,0,1) }}>the&nbsp;catalogue</div>
-      {projects.map((p,i) => {
-        const ease = Easing.easeOutCubic(cardProg(i));
-        const r = p.r*Math.max(0.15,ease);
-        const ringR = p.r+28;
-        return (
-          <React.Fragment key={i}>
-            <svg width="1920" height="1080" style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-              <circle cx={p.x} cy={p.y} r={ringR*Math.max(0.15,ease)} fill="none" stroke={FG} strokeWidth="1" strokeDasharray="3 6" opacity={ease*0.6} />
-            </svg>
-            <Circle cx={p.x} cy={p.y} r={r} fill={FG} />
-            <div style={{ position:'absolute', left:p.x-60, top:p.y-32, width:120, textAlign:'center', fontFamily:HEL, fontSize:64, fontWeight:700, color:BG, letterSpacing:'-0.04em', lineHeight:1, opacity:ease }}>{p.idx}</div>
-            <div style={{ position:'absolute', left:p.x-200, top:p.y+ringR+28, width:400, textAlign:'center', opacity:ease, transform:`translateY(${(1-ease)*16}px)` }}>
-              <div style={{ fontFamily:HEL, fontSize:36, fontWeight:700, color:FG, letterSpacing:'-0.02em' }}>{p.title}</div>
-              <div style={{ fontFamily:HEL, fontSize:16, fontWeight:400, color:FG, lineHeight:1.4, marginTop:8 }}>{p.desc}</div>
-              <div style={{ fontFamily:MONO, fontSize:11, color:DIM, letterSpacing:'0.14em', textTransform:'uppercase', marginTop:14 }}>▸ {p.tag}</div>
-            </div>
-          </React.Fragment>
-        );
-      })}
-    </>
-  );
-}
-
-// ── Scene 6 — Contact (27–32s) ────────────────────────────────────────────
-function SceneContact() {
-  const { progress, localTime } = useSprite();
-  const channels = [
-    { label:'GitHub',   handle:'github.com/llapik', x:480 },
-    { label:'Telegram', handle:'t.me/eayyyyyy',     x:960 },
-    { label:'Email',    handle:'alex74s00@mail.ru', x:1440 },
-  ];
-  const eased = Easing.easeOutCubic(clamp(progress*2,0,1));
-  const pulse = progress>0.65 ? 1+0.06*Math.sin((progress-0.65)*60) : 1;
-  const finalWord = '▸ TRANSMIT';
-  const showChars = Math.floor(clamp((progress-0.78)*4,0,1)*finalWord.length);
-
-  return (
-    <>
-      <div style={{ position:'absolute', left:120, top:140, fontFamily:MONO, fontSize:12, color:FG, letterSpacing:'0.18em', textTransform:'uppercase', opacity:clamp(progress*5,0,1) }}>05 ▸ contact / signal</div>
-      <div style={{ position:'absolute', left:0, top:220, width:1920, textAlign:'center', fontFamily:HEL, fontSize:280, fontWeight:800, color:FG, letterSpacing:'-0.06em', lineHeight:0.85, opacity:clamp((progress-0.55)*3,0,1)*0.08 }}>TRANSMIT</div>
-      <div style={{ position:'absolute', left:120, top:220, fontFamily:HEL, fontSize:110, fontWeight:800, color:FG, letterSpacing:'-0.05em', lineHeight:0.95, opacity:clamp(progress*4,0,1) }}>open<br/>signal.</div>
-      <div style={{ position:'absolute', left:120, top:460, width:600, fontFamily:HEL, fontSize:24, fontWeight:400, color:FG, lineHeight:1.4, opacity:clamp((progress-0.2)*3,0,1) }}>
-        Открыт для сотрудничества и новых идей.<br/>Choose a channel:
-      </div>
-      {channels.map((c,i) => {
-        const x = c.x - (i-1)*600*(1-eased);
-        const r = 56*pulse;
-        const labelOpacity = clamp((progress-0.35-i*0.04)*4,0,1);
-        return (
-          <React.Fragment key={i}>
-            <Circle cx={x} cy={760} r={r} fill={FG} opacity={eased} />
-            <svg width="1920" height="1080" style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-              <circle cx={x} cy={760} r={r+24} fill="none" stroke={FG} strokeWidth="1" strokeDasharray="2 5" opacity={eased*0.4} />
-            </svg>
-            <div style={{ position:'absolute', left:x-200, top:844, width:400, textAlign:'center', opacity:labelOpacity, transform:`translateY(${(1-labelOpacity)*12}px)` }}>
-              <div style={{ fontFamily:HEL, fontSize:26, fontWeight:700, color:FG, letterSpacing:'-0.01em' }}>{c.label}</div>
-              <div style={{ fontFamily:MONO, fontSize:13, color:FG, letterSpacing:'0.04em', marginTop:6 }}>{c.handle}</div>
-            </div>
-          </React.Fragment>
-        );
-      })}
-      <div style={{ position:'absolute', left:0, bottom:120, width:1920, textAlign:'center', fontFamily:MONO, fontSize:22, color:FG, letterSpacing:'0.2em', textTransform:'uppercase' }}>
-        {finalWord.slice(0,showChars)}
-        <span style={{ display:'inline-block', width:10, height:22, background:FG, marginLeft:4, verticalAlign:'middle', opacity:localTime%0.6<0.3?1:0 }} />
-      </div>
-    </>
-  );
-}
-
-function Reel() {
-  return (
-    <>
-      <Grain /><Reticle /><StarField count={50} />
-      <Sprite start={0}  end={4}>  <SceneIntro    /></Sprite>
-      <Sprite start={4}  end={9}>  <SceneName     /></Sprite>
-      <Sprite start={9}  end={14}> <SceneAbout    /></Sprite>
-      <Sprite start={14} end={20}> <SceneSkills   /></Sprite>
-      <Sprite start={20} end={27}> <SceneProjects /></Sprite>
-      <Sprite start={27} end={32}> <SceneContact  /></Sprite>
-      <HUD />
-    </>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <Stage width={1920} height={1080} duration={32} background="#ededea" persistKey="llapik-reel">
-    <Reel />
-  </Stage>
-);
-</script>
+  <script src="js/i18n.js"></script>
+  <script src="js/cursor.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
