@@ -1370,27 +1370,39 @@ function SceneProjects() {
   } = useSprite();
   const projects = [{
     idx: '01',
-    title: 'Genesis',
-    desc: 'WebGL particle field + shader playground',
-    tag: 'webgl · glsl',
-    r: 200,
-    x: 380,
+    title: 'AI PC Repair & Optimizer',
+    desc: 'Загрузочная USB с локальным AI для диагностики и ремонта ПК',
+    tag: 'python · js · shell',
+    link: 'https://github.com/llapik/calcoc',
+    r: 150,
+    x: 330,
     y: 540
   }, {
     idx: '02',
-    title: 'Stellar',
-    desc: 'Three.js portfolio scene & camera rig',
-    tag: 'three · gsap',
-    r: 160,
-    x: 960,
+    title: 'Multi-Browser Operator',
+    desc: 'Синхронное управление окнами Windows — мышь и клавиатура',
+    tag: 'python · batch',
+    link: 'https://github.com/llapik/-Multi-Browser-Operator-',
+    r: 132,
+    x: 745,
     y: 540
   }, {
     idx: '03',
-    title: 'Atlas',
-    desc: 'SCSS design system & motion tokens',
-    tag: 'scss · ts',
-    r: 120,
-    x: 1480,
+    title: 'Electronic Journal',
+    desc: 'Журнал преподавателя на C# + MS Access',
+    tag: 'c# · ms access',
+    link: 'https://drive.google.com',
+    r: 118,
+    x: 1150,
+    y: 540
+  }, {
+    idx: '04',
+    title: 'Coming Soon',
+    desc: 'Full-stack автоматизация: realtime + облако',
+    tag: 'ts · docker · postgres',
+    link: 'https://github.com/llapik',
+    r: 104,
+    x: 1555,
     y: 540
   }];
   const cardProg = i => {
@@ -1465,9 +1477,9 @@ function SceneProjects() {
       }
     }, p.idx), /*#__PURE__*/React.createElement(T, {
       style: {
-        left: p.x - 200,
-        top: p.y + ringR + 28,
-        width: 400,
+        left: p.x - 190,
+        top: p.y + ringR + 26,
+        width: 380,
         textAlign: 'center',
         opacity: ease,
         transform: `translateY(${(1 - ease) * 16}px)`
@@ -1475,14 +1487,15 @@ function SceneProjects() {
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: HEL,
-        fontSize: 36,
+        fontSize: 24,
         fontWeight: 700,
-        letterSpacing: '-0.02em'
+        letterSpacing: '-0.02em',
+        lineHeight: 1.05
       }
     }, p.title), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: HEL,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 400,
         lineHeight: 1.4,
         marginTop: 8
@@ -1494,9 +1507,27 @@ function SceneProjects() {
         color: DIM,
         letterSpacing: '0.14em',
         textTransform: 'uppercase',
-        marginTop: 14
+        marginTop: 12
       }
-    }, "\u25B8 ", p.tag)));
+    }, "\u25B8 ", p.tag)), ease > 0.4 && /*#__PURE__*/React.createElement("a", {
+      href: p.link,
+      target: "_blank",
+      rel: "noopener",
+      title: p.title,
+      "aria-label": p.title,
+      style: {
+        position: 'absolute',
+        left: p.x - 190,
+        top: p.y - p.r - 12,
+        width: 380,
+        height: p.r + 300,
+        pointerEvents: 'auto',
+        cursor: 'pointer',
+        zIndex: 5,
+        display: 'block',
+        background: 'transparent'
+      }
+    }));
   }));
 }
 
@@ -1511,14 +1542,17 @@ function SceneContact() {
   const channels = [{
     label: 'GitHub',
     handle: 'github.com/llapik',
+    href: 'https://github.com/llapik',
     x: 480
   }, {
     label: 'Telegram',
     handle: 't.me/eayyyyyy',
+    href: 'https://t.me/eayyyyyy',
     x: 960
   }, {
     label: 'Email',
     handle: 'alex74s00@mail.ru',
+    href: 'mailto:alex74s00@mail.ru',
     x: 1440
   }];
   const conv = clamp(progress * 2, 0, 1);
@@ -1626,7 +1660,25 @@ function SceneContact() {
         letterSpacing: '0.04em',
         marginTop: 6
       }
-    }, c.handle)));
+    }, c.handle)), eased > 0.3 && /*#__PURE__*/React.createElement("a", {
+      href: c.href,
+      target: c.href.indexOf('mailto:') === 0 ? undefined : '_blank',
+      rel: "noopener",
+      title: c.label,
+      "aria-label": c.label,
+      style: {
+        position: 'absolute',
+        left: x - 150,
+        top: y - r - 12,
+        width: 300,
+        height: r + 190,
+        pointerEvents: 'auto',
+        cursor: 'pointer',
+        zIndex: 5,
+        display: 'block',
+        background: 'transparent'
+      }
+    }));
   }), /*#__PURE__*/React.createElement(T, {
     style: {
       left: 0,
@@ -1683,15 +1735,17 @@ Object.assign(window, {
 
 /* ===== app.jsx ===== */
 /* llapik reel — scroll-driven app.
-   Scrubs the sprite-reel timeline (animations.jsx + scenes.jsx) by page scroll. */
+   Scrubs the sprite-reel timeline (animations.jsx + scenes.jsx) by page scroll,
+   with eased smoothing so content does not snap. */
 (function () {
   const {
     useState,
     useEffect,
     useMemo
   } = React;
+  const RUNWAY_VH = 1100; // scroll length: higher = slower scrub
+  const SMOOTH = 0.09; // easing toward scroll target (lower = smoother/slower)
 
-  // Scroll-driven stage: the reel timeline is scrubbed by page scroll.
   function ScrollStage({
     width,
     height,
@@ -1710,25 +1764,38 @@ Object.assign(window, {
       return () => window.removeEventListener('resize', measure);
     }, []);
 
-    // Map scroll position -> timeline seconds
+    // Map scroll position -> timeline seconds, eased via a rAF lerp
     useEffect(() => {
-      let raf = null;
-      const onScroll = () => {
-        if (raf) return;
-        raf = requestAnimationFrame(() => {
-          raf = null;
-          const max = document.documentElement.scrollHeight - window.innerHeight;
-          const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-          setTime(p * duration);
-          const hint = document.getElementById('reel-hint');
-          if (hint) hint.classList.toggle('hidden', window.scrollY > window.innerHeight * 0.15);
-        });
+      let target = 0,
+        cur = 0,
+        raf = null;
+      const readTarget = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+        target = p * duration;
+        const hint = document.getElementById('reel-hint');
+        if (hint) hint.classList.toggle('hidden', window.scrollY > window.innerHeight * 0.12);
       };
-      window.addEventListener('scroll', onScroll, {
+      const loop = () => {
+        cur += (target - cur) * SMOOTH;
+        if (Math.abs(target - cur) < 0.0004) cur = target;
+        setTime(cur); // identical value => React skips re-render
+        raf = requestAnimationFrame(loop);
+      };
+      readTarget();
+      cur = target; // start already settled (no intro sweep)
+      window.addEventListener('scroll', readTarget, {
         passive: true
       });
-      onScroll();
-      return () => window.removeEventListener('scroll', onScroll);
+      window.addEventListener('resize', readTarget, {
+        passive: true
+      });
+      raf = requestAnimationFrame(loop);
+      return () => {
+        cancelAnimationFrame(raf);
+        window.removeEventListener('scroll', readTarget);
+        window.removeEventListener('resize', readTarget);
+      };
     }, []);
     const ctx = useMemo(() => ({
       time,
@@ -1760,6 +1827,15 @@ Object.assign(window, {
       value: ctx
     }, children)));
   }
+
+  // Smooth-scroll to a fraction (0..1) of the runway — used by the overlay nav.
+  window.reelScrollToFrac = function (frac) {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({
+      top: Math.round(max * frac),
+      behavior: 'smooth'
+    });
+  };
   function App() {
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ScrollStage, {
       width: 1920,
@@ -1768,7 +1844,7 @@ Object.assign(window, {
       background: "#ededea"
     }, /*#__PURE__*/React.createElement(Reel, null)), /*#__PURE__*/React.createElement("div", {
       style: {
-        height: '640vh'
+        height: RUNWAY_VH + 'vh'
       },
       "aria-hidden": "true"
     }));
