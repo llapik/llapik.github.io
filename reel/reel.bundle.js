@@ -1706,28 +1706,65 @@ function SceneContact() {
 // ─────────────────────────────────────────────────────────────────────────
 // MAIN COMPOSITION
 // ─────────────────────────────────────────────────────────────────────────
+// Crossfade wrapper: keeps a scene mounted through a fade tail and overlaps
+// with the neighbouring scene, so boundaries dissolve instead of hard-cutting.
+function FadeScene({
+  start,
+  end,
+  fade = 1.1,
+  noOut = false,
+  children
+}) {
+  const {
+    time
+  } = useTimeline();
+  const h = fade / 2;
+  if (time < start - h || time > end + h) return null;
+  const dur = end - start;
+  const localTime = Math.max(0, Math.min(dur, time - start));
+  const progress = dur > 0 ? localTime / dur : 0;
+  let opacity = 1;
+  if (start > 0 && time < start + h) opacity = clamp((time - (start - h)) / fade, 0, 1);
+  if (!noOut && time > end - h) opacity = Math.min(opacity, clamp((end + h - time) / fade, 0, 1));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      inset: 0,
+      opacity,
+      willChange: 'opacity'
+    }
+  }, /*#__PURE__*/React.createElement(SpriteContext.Provider, {
+    value: {
+      localTime,
+      progress,
+      duration: dur,
+      visible: true
+    }
+  }, children));
+}
 function Reel() {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Grain, null), /*#__PURE__*/React.createElement(Reticle, null), /*#__PURE__*/React.createElement(StarField, {
     count: 50
-  }), /*#__PURE__*/React.createElement(Sprite, {
+  }), /*#__PURE__*/React.createElement(FadeScene, {
     start: 0,
     end: 4
-  }, "   ", /*#__PURE__*/React.createElement(SceneIntro, null)), /*#__PURE__*/React.createElement(Sprite, {
+  }, "          ", /*#__PURE__*/React.createElement(SceneIntro, null)), /*#__PURE__*/React.createElement(FadeScene, {
     start: 4,
     end: 9
-  }, "   ", /*#__PURE__*/React.createElement(SceneName, null)), /*#__PURE__*/React.createElement(Sprite, {
+  }, "          ", /*#__PURE__*/React.createElement(SceneName, null)), /*#__PURE__*/React.createElement(FadeScene, {
     start: 9,
     end: 14
-  }, "  ", /*#__PURE__*/React.createElement(SceneAbout, null)), /*#__PURE__*/React.createElement(Sprite, {
+  }, "         ", /*#__PURE__*/React.createElement(SceneAbout, null)), /*#__PURE__*/React.createElement(FadeScene, {
     start: 14,
     end: 20
-  }, "  ", /*#__PURE__*/React.createElement(SceneSkills, null)), /*#__PURE__*/React.createElement(Sprite, {
+  }, "         ", /*#__PURE__*/React.createElement(SceneSkills, null)), /*#__PURE__*/React.createElement(FadeScene, {
     start: 20,
     end: 27
-  }, "  ", /*#__PURE__*/React.createElement(SceneProjects, null)), /*#__PURE__*/React.createElement(Sprite, {
+  }, "         ", /*#__PURE__*/React.createElement(SceneProjects, null)), /*#__PURE__*/React.createElement(FadeScene, {
     start: 27,
-    end: 32
-  }, "  ", /*#__PURE__*/React.createElement(SceneContact, null)), /*#__PURE__*/React.createElement(HUD, null));
+    end: 32,
+    noOut: true
+  }, "   ", /*#__PURE__*/React.createElement(SceneContact, null)), /*#__PURE__*/React.createElement(HUD, null));
 }
 Object.assign(window, {
   Reel
